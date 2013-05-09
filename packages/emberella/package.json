@@ -1,0 +1,32 @@
+{
+  "name": "emberella",
+  "summary": "A hodgepodge collection of Ember components",
+  "description": "",
+  "homepage": "https://github.com/realityendshere/emberella",
+  "author": "Dana Franklin and contributors",
+  "version": "0.0.1",
+
+  "directories": {
+    "lib": "lib"
+  },
+
+  "dependencies": {
+    "spade": "~> 1.0",
+    "ember-runtime": ">= 0"
+  },
+
+  "dependencies:development": {
+    "spade-qunit": "~> 1.0.0"
+  },
+
+  "bpm:build": {
+    "bpm_libs.js": {
+      "files": ["lib"],
+      "modes": "*"
+    },
+    "emberella/bpm_tests.js": {
+      "files": ["tests"],
+      "modes": ["debug"]
+    }
+  }
+}
