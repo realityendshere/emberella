@@ -5,6 +5,11 @@ has helped me and my colleagues craft and ship several web-based tools to our
 client. It is my hope to offer a grab bag of useful components for the Ember
 framework here.
 
+# Compatibility
+
+Emberella currently targets only **Safari on OS X**. It's likely some parts of
+this project will work in other browsers, but your milage will vary.
+
 ## Is it "Good"?
 
 Although I've followed the development of [Ember](http://emberjs.com) since its
