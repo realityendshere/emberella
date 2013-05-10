@@ -23,7 +23,7 @@ Right now, a grab bag of code.
 
 ### Controller(s)
 
-`Emberella.SparseArrayController`
+**Emberella.SparseArrayController**
 
 In cases where a finite but large amount of data must be fetched from the
 server (or wherever your app's data persists), it's not always practical to
@@ -51,25 +51,25 @@ Underscore.js.
 
 ### Mixins
 
-`Emberella.DraggableMixin`
+**Emberella.DraggableMixin**
 
 Extend a view with this mixin to establish some patterns for responding to the
 `dragStart` and `dragEnd` DOM events. Namely, adding and removing class names
 from the draggable view element.
 
-`Emberella.DroppableMixin`
+**Emberella.DroppableMixin**
 
 Extend a view with this mixin to make it a drop target for draggable views or
 even files from the desktop. Adds handling for the variety of drag and drop
 events critical to making a drop target function as expected.
 
-`Emberella.FocusableMixin`
+**Emberella.FocusableMixin**
 
 Extend a view with this mixin to enable it to respond to focus and blur events
 and become the target of keyboard events (or other events reserved for
 elements that can become the window's active element).
 
-`Emberella.KeyboardControlMixin`
+**Emberella.KeyboardControlMixin**
 
 Extend a view with this mixin (and `Emberella.FocusableMixin`) to allow it to
 respond to keyboard input. Maps common control keys to easy to remember methods
@@ -80,7 +80,7 @@ The alpha-numeric and punctuation keys do still require a key code reference;
 if a key isn't mapped to a developer-friendly name, the keyboard event will be
 sent along to a method like `key65Pressed`.
 
-`Emberella.QueueableMixin`
+**Emberella.QueueableMixin**
 
 Extend an array controller with this mixin to add a processing queue.
 
@@ -93,30 +93,30 @@ I use this mixin to manage file uploads. If the user wishes to upload 1000
 files at once, I place them in a queue and send files to the server a few at a
 time.
 
-`Emberella.RemoteQueryBindingsMixin`
+**Emberella.RemoteQueryBindingsMixin**
 
 Extend a controller with this mixin to map specified controller properties
 into a query object to be transformed into request parameters to be sent to
 the server.
 
-`Ember.ResizeHandler`
+**Ember.ResizeHandler**
 
 Extend a view with this mixin to allow it to react to window resize events.
 
 Copied from https://github.com/Addepar/ember-table/blob/master/src/utils/resize_handler.coffee
 
-`Ember.ScrollHandlerMixin`
+**Ember.ScrollHandlerMixin**
 
 Extend a view with this mixin to allow it to react to scroll events.
 
 Copied from https://github.com/Addepar/ember-table/blob/master/src/utils/utils.coffee
 
-`Emberella.SelectableMixin`
+**Emberella.SelectableMixin**
 
 Extend an array controller with this mixin to enable it to manage a set of
 selected content members.
 
-`Ember.StyleBindingsMixin`
+**Ember.StyleBindingsMixin**
 
 Extend a view with this mixin to map the values of specified properties to
 an inline style attribute on the view's DOM element.
@@ -125,7 +125,7 @@ Copied from https://github.com/Addepar/ember-table/blob/master/src/utils/style_b
 
 ### Views
 
-`Emberella.ListView`
+**Emberella.ListView**
 
 My colleagues and I gave both `Ember.ListView` and `Ember.TableView` a try.
 
@@ -152,26 +152,26 @@ your app must (or may) display a long list of records, well, that's what this
 view is built for. And it can seemingly display thousands of rows (I got up to
 one million rows in my own experiments) without killing performance.
 
-`Emberella.ListItemView`
+**Emberella.ListItemView**
 
 An individual listing for an `Emberella.ListView`.
 
-`Emberella.GridView`
+**Emberella.GridView**
 
 Extends `Emberella.ListView` with support for columns. If your app needs to
 display a long list of records in a grid layout (e.g. a grid of photos), well,
 that is what this view is supposed to do.
 
-`Emberella.GridItemView`
+**Emberella.GridItemView**
 
 An individual listing for an `Emberella.GridView`.
 
-`Emberella.FlexibleTextArea`
+**Emberella.FlexibleTextArea**
 
 A text area with the ability to grow vertically as the line count of its value
 grows.
 
-`Emberella.ImageView`
+**Emberella.ImageView**
 
 If an `<img>`'s src attribute is bound to a property that frequently changes
 value, you may notice the image referenced by the previous src continues to be
@@ -182,11 +182,11 @@ adjust the `<img>` element in response to updates to the src attribute.
 Additionally, the `Emberella.ImageView` will alert its parent each time a new
 image is about to be fetched and when loading is complete.
 
-`Emberella.RangeInput`
+**Emberella.RangeInput**
 
 A wrapper for a "range" type input.
 
-`Emberella.StarRating`
+**Emberella.StarRating**
 
 Want to give something 5 stars? That's what this view is for. You'll need to
 provide your own stars and styles for the time being.
@@ -232,6 +232,7 @@ I can't list everything here. But here are some major TODOs.
 * Unit tests
 * Refactoring of components I built awhile ago with less experience
 * Adding some packaging to make it easy to install Emberella in your app
+* Packaged styling for certain views
 
 ## Many to Thank
 
