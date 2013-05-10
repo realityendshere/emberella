@@ -579,15 +579,15 @@ Emberella.ListView = Emberella.CollectionView.extend Ember.ScrollHandlerMixin, E
     else
       # If `emptyView` is correctly defined and the list length is 0, append
       # it to the listing
+      for i in [0...childViewsLength]
+        childView = childViews.objectAt(i)
+        @_reuseChildForContentIndex(childView, i) if childView
       return unless emptyView
       isClass = Ember.CoreView.detect emptyView
       emptyView = @createChildView(emptyView)
       set(@, 'emptyView', emptyView)
       @_createdEmptyView = emptyView if isClass
       @unshiftObject(emptyView)
-      for i in [0...childViewsLength]
-        childView = childViews.objectAt(i)
-        @_reuseChildForContentIndex(childView, i)
 
     null
   , 'startingIndex'
@@ -609,6 +609,7 @@ Emberella.ListView = Emberella.CollectionView.extend Ember.ScrollHandlerMixin, E
     @return null
   ###
   _reuseChildForContentIndex: (childView, contentIndex) ->
+    return unless childView?
     return if get(childView, 'isDestroyed')
 
     currentStartingIndex = @_startingIndex()
