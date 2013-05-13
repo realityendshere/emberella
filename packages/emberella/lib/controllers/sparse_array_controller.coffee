@@ -521,7 +521,7 @@ Emberella.SparseArrayController = Ember.ArrayProxy.extend Ember.ControllerMixin,
   sparseContentArrayDidChange: (array, idx, removedCount, addedCount) ->
     removedObjects = @_PREVIOUS_SPARSE_CONTENT
     addedObjects = array.slice(idx, idx + addedCount)
-    delta = +(addedObjects.length || 0) - +(removedObjects.length || 0)
+    delta = (addedObjects?.length || 0) - (removedObjects?.length || 0)
     set(@, '_length', get(@, '_length') + delta)
     for item, i in removedObjects
       @didReplaceSparseArrayItem(item, addedObjects[i]) if item and item.isSparseArrayItem
