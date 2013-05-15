@@ -107,7 +107,7 @@ Emberella.GridView = Emberella.ListView.extend
   totalHeight: Ember.computed ->
     contentLength = parseInt(get(@, 'content.length'), 10) || 0
     totalHeight = Math.ceil(contentLength / get(@, 'columns')) * get(@, 'rowHeight')
-    Math.max totalHeight, get(@, 'height')
+    totalHeight
   .property('content.length', 'rowHeight', 'height', 'columns')
 
   ###
