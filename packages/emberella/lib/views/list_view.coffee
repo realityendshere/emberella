@@ -188,8 +188,8 @@ Emberella.ListView = Emberella.CollectionView.extend Ember.ScrollHandlerMixin, E
   totalHeight: Ember.computed ->
     contentLength = parseInt(get(@, 'content.length'), 10) || 0
     totalHeight = contentLength * get(@, 'rowHeight')
-    Math.max totalHeight, get(@, 'height')
-  .property 'content.length', 'rowHeight', 'height'
+    totalHeight
+  .property 'content.length', 'rowHeight'
 
   ###
     A computed property that indicates the index of the row closest to the
