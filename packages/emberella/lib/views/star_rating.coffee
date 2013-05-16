@@ -24,11 +24,11 @@ set = Ember.set
 Emberella.StarRating = Ember.View.extend
   classNames: ['ember-star-rating']
 
-  template: Ember.Handlebars.compile([
+  defaultTemplate: Ember.Handlebars.compile([
       '<span class="star-rating" {{bindAttr style="view.outerStyle"}}>',
         '<span class="star-rating star-rating-value" {{bindAttr style="view.innerStyle"}}></span>',
       '</span>'
-    ].join(''))
+    ].join(' '))
 
   value: 0
   maximum: 5

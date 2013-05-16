@@ -29,7 +29,7 @@ Emberella.RangeInput = Ember.View.extend
   step: 0.01
   scrollSpeed: 0.2
 
-  template: Ember.Handlebars.compile '<input type="range" {{bindAttr min="view.minimum"}} {{bindAttr max="view.maximum"}} {{bindAttr step="view.step"}} {{bindAttr value="view.value"}} />'
+  defaultTemplate: Ember.Handlebars.compile '<input type="range" {{bindAttr min="view.minimum"}} {{bindAttr max="view.maximum"}} {{bindAttr step="view.step"}} {{bindAttr value="view.value"}} />'
 
   change: (e) ->
     target = e.target
