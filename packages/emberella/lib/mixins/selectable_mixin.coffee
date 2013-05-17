@@ -125,6 +125,7 @@ Emberella.SelectableMixin = Ember.Mixin.create
     item = @objectAt(parseInt(item, 10)) if typeOf(item) is 'number'
     toggle = get(options, 'toggle')
     range = get(options, 'range')
+    retainSelection = get(options, 'retainSelection')
 
     if toggle or range
       if toggle
@@ -137,7 +138,8 @@ Emberella.SelectableMixin = Ember.Mixin.create
         selectionRange = [start..end]
         @selectObjects(selectionRange)
     else
-      @deselectAll().selectObjects(item)
+      @deselectAll() unless retainSelection
+      @selectObjects(item)
 
     @
 
