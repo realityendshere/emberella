@@ -262,7 +262,9 @@ Emberella.ListView = Emberella.CollectionView.extend Ember.ScrollHandlerMixin, E
   isObjectAt: (idx) ->
     content = get(@, 'content')
     return false unless content?
-    if content.isObjectAt then !!(content.isObjectAt(idx)) else !!(content.objectAtContent(idx))
+    if content.isObjectAt then !!(content.isObjectAt(idx))
+    else if content.objectAtContent then !!(content.objectAtContent(idx))
+    else !!(content.objectAt(idx))
 
   ###
     Scroll to the specified position given in pixels.
