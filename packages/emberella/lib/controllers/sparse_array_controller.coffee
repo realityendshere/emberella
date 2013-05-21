@@ -519,8 +519,11 @@ Emberella.SparseArrayController = Ember.ArrayProxy.extend Ember.ControllerMixin,
     @param {Integer} addedCount
   ###
   sparseContentArrayDidChange: (array, idx, removedCount, addedCount) ->
-    removedObjects = @_PREVIOUS_SPARSE_CONTENT
+    removedObjects = @_PREVIOUS_SPARSE_CONTENT ? Ember.A()
     addedObjects = array.slice(idx, idx + addedCount)
+
+    # Calculate delta with length properties of actual arrays
+    # More accurate than using addedCount and removedCount
     delta = (addedObjects?.length || 0) - (removedObjects?.length || 0)
     set(@, '_length', get(@, '_length') + delta)
     for item, i in removedObjects
