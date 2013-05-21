@@ -9,6 +9,8 @@ Emberella = window.Emberella
 get = Ember.get
 set = Ember.set
 
+LIST_ITEM_CLASS = 'emberella-list-item-view'
+
 ###
   `Emberella.ListItemView` is an `Ember.View` designed for use as a child
   listing of `Emberella.ListView`.
@@ -32,7 +34,7 @@ Emberella.ListItemView = Emberella.View.extend Ember.StyleBindingsMixin,
     @type Array
     @default ['emberella-list-item-view']
   ###
-  classNames: ['emberella-list-item-view']
+  classNames: [LIST_ITEM_CLASS]
 
   ###
     Adds a `loading` class to the listing element if its content isn't loaded.
@@ -41,7 +43,7 @@ Emberella.ListItemView = Emberella.View.extend Ember.StyleBindingsMixin,
     @type Array
     @default ['isLoaded::loading']
   ###
-  classNameBindings: ['isLoaded::loading']
+  classNameBindings: ['fluctuateListingClass', 'isLoaded::loading']
 
   ###
     Loading state of view. Typically bound to the `isLoaded` property of the
@@ -74,6 +76,31 @@ Emberella.ListItemView = Emberella.View.extend Ember.StyleBindingsMixin,
   rowHeightBinding: 'parentView.rowHeight'
 
   ###
+    Give each child listing an additional class name based on the child's
+    content index.
+
+    For example, setting this property to 2 will cause listings to alternate
+    between a class containing 0 or 1. (contentIndex % 2)
+
+    @property fluctuateListing
+    @type Integer
+    @default 2
+  ###
+  fluctuateListing: 2
+
+  ###
+    The seed for the fluctuated class name.
+
+    For example, setting this property to `item-listing` would result in class
+    names like `item-listing-0` and `item-listing-1`.
+
+    @property fluctuateListingPrefix
+    @type String
+    @default 'emberella-list-item-view'
+  ###
+  fluctuateListingPrefix: LIST_ITEM_CLASS
+
+  ###
     Set `absolute` positioning for each listing.
 
     @property position
@@ -94,6 +121,20 @@ Emberella.ListItemView = Emberella.View.extend Ember.StyleBindingsMixin,
   top: Ember.computed ->
     get(@, 'contentIndex') * get(@, 'rowHeight')
   .property 'contentIndex', 'rowHeight'
+
+  ###
+    Additional class name for this listing.
+
+    @property fluctuateListingClass
+    @type String
+  ###
+  fluctuateListingClass: Ember.computed ->
+    contentIndex = get @, 'contentIndex'
+    fluctuateListing = parseInt get(@, 'fluctuateListing'), 10
+    fluctuateListingPrefix = get @, 'fluctuateListingPrefix'
+    return '' unless fluctuateListing and fluctuateListing > 0
+    [fluctuateListingPrefix, (contentIndex % fluctuateListing)].join('-')
+  .property 'contentIndex', 'fluctuateListing', 'fluctuateListingPrefix'
 
   ###
     In pixels, the height of this listing.

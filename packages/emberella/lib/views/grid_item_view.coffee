@@ -9,6 +9,8 @@ Emberella = window.Emberella
 get = Ember.get
 set = Ember.set
 
+GRID_ITEM_CLASS = 'emberella-grid-item-view'
+
 ###
   `Emberella.GridItemView` is an `Ember.View` designed for use as a child
   listing of `Emberella.GridView`.
@@ -30,7 +32,7 @@ Emberella.GridItemView = Emberella.ListItemView.extend
     @type Array
     @default ['emberella-grid-item-view']
   ###
-  classNames: ['emberella-grid-item-view']
+  classNames: [GRID_ITEM_CLASS]
 
   ###
     Defines an array of properties to transform into styles on the listing's
@@ -62,6 +64,26 @@ Emberella.GridItemView = Emberella.ListItemView.extend
     @type Integer
   ###
   columnsBinding: 'parentView.columns'
+
+  ###
+    Override with column count.
+
+    @property fluctuateListing
+    @type Integer
+  ###
+  fluctuateListing: Ember.computed.defaultTo 'columns'
+
+  ###
+    The seed for the fluctuated class name.
+
+    For example, setting this property to `item-listing` would result in class
+    names like `item-listing-0` and `item-listing-1`.
+
+    @property fluctuateListingPrefix
+    @type String
+    @default 'emberella-grid-item-view'
+  ###
+  fluctuateListingPrefix: GRID_ITEM_CLASS
 
   ###
     In pixels, the size of the margin to incorporate into this listing's
