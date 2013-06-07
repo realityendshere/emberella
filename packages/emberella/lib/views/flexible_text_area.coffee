@@ -170,7 +170,8 @@ Emberella.FlexibleTextArea = Ember.TextArea.extend Ember.StyleBindingsMixin, Emb
   updateSizer: ->
     value = get(@, 'value') ? ''
     sizer = get(@, SIZER_PROPERTY) ? @createSizer()
-    sizer.html(value.replace(/(\r\n|\n|\r)/gm, " <br/> "))
+    value = sizer.text(value).html().replace(/(\r\n|\n|\r)/gm, " <br/> ")
+    sizer.html(value)
     sizer
 
   ###
