@@ -20,8 +20,10 @@ Emberella.FocusableMixin = Ember.Mixin.create
 
   hasFocus: false
 
-  focusIn: ->
+  focusIn: (e) ->
+    e.stopPropagation()
     set @, 'hasFocus', true
 
-  focusOut: ->
+  focusOut: (e) ->
+    e.stopPropagation()
     set @, 'hasFocus', false
