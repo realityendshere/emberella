@@ -2,6 +2,7 @@
 #= require ./views
 
 #= require ./views/flexible_text_area
+#= require ./views/flexible_text_field
 #= require ./views/grid_item_view
 #= require ./views/grid_view
 #= require ./views/image_view
@@ -9,6 +10,7 @@
 #= require ./views/list_view
 #= require ./views/range_input
 #= require ./views/star_rating
+#= require ./views/tags_input
 
 #= require ./mixins/draggable_mixin
 #= require ./mixins/droppable_mixin
