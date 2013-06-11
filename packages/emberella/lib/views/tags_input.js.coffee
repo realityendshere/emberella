@@ -1,3 +1,6 @@
+#= require ../mixins/style_bindings
+#= require ../mixins/focusable_mixin
+#= require ../mixins/keyboard_control_mixin
 #= require ./flexible_text_field
 
 Emberella = window.Emberella
