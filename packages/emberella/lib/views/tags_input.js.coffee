@@ -308,7 +308,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     return @ if value is '' or @contains(value)
     get(@, 'content').insertAt idx, value
     set(@, 'cursor', idx + 1)
-    @didAddValue value
+    @didAddValue value, idx
     @
 
   removeValue: (value) ->
