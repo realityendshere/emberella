@@ -86,7 +86,7 @@ Emberella.FlexibleTextField = Ember.TextField.extend Ember.StyleBindingsMixin, E
     @type Integer|Null
     @default null
   ###
-  width: null
+  width: Ember.computed.defaultTo 'minWidth'
 
   ###
     A max-width style of 100% to keep the text field from easily growing out
@@ -144,7 +144,9 @@ Emberella.FlexibleTextField = Ember.TextField.extend Ember.StyleBindingsMixin, E
 
     syncStyles = ->
       #copy styles from text field to sizer node
-      sizer.attr('style', getComputedStyle(get(@, 'element'), "").cssText)
+      element = get(@, 'element')
+      return unless element
+      sizer.attr('style', getComputedStyle(element, "").cssText)
 
       #hide the sizer node
       sizer.css(
