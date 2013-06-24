@@ -323,15 +323,21 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     set(@, 'cursor', idx)
     @didRemoveValue value
 
-  isItemView: (view) ->
+  getItemViewClass: ->
     itemViewClass = get @, 'itemViewClass'
     itemViewClass = get(itemViewClass) if typeof itemViewClass is 'string'
-    !!(view instanceof itemViewClass)
+    itemViewClass
 
-  isInputView: (view) ->
+  getInputViewClass: ->
     inputViewClass = get @, 'inputViewClass'
     inputViewClass = get(inputViewClass) if typeof inputViewClass is 'string'
-    !!(view instanceof inputViewClass)
+    inputViewClass
+
+  isItemView: (view) ->
+    !!(view instanceof @getItemViewClass())
+
+  isInputView: (view) ->
+    !!(view instanceof @getInputViewClass())
 
   focusOn: (idx) ->
     childViews = get(@, 'childViews')
@@ -584,9 +590,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     null
 
   _createInputView: ->
-    inputViewClass = get @, 'inputViewClass'
-    inputViewClass = get(inputViewClass) if typeof inputViewClass is 'string'
-    inputView = @createChildView(inputViewClass)
+    inputView = @createChildView(@getInputViewClass())
     set @, 'inputView', inputView
     inputView
 
@@ -597,8 +601,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     childViews = @
     childViewsLength = Math.max(0, get(@, 'length'))
 
-    itemViewClass = get @, 'itemViewClass'
-    itemViewClass = get(itemViewClass) if typeof itemViewClass is 'string'
+    itemViewClass = @getItemViewClass()
 
     content = get(@, 'content')
     contentLength = get(@, 'content.length')
@@ -612,7 +615,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
           @insertAt(i, childView)
         set childView, 'content', content[i]
       else
-        childView?.removeFromParent() if childView instanceof itemViewClass
+        childView?.removeFromParent() if @isItemView childView
 
     @_insertInputView()
     null
