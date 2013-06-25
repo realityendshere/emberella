@@ -224,6 +224,8 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   deleteCharacter: 'x'
   deleteTitle: "Remove tag"
 
+  tagOnFocusOut: true
+
   _primary_delimiter: Ember.computed ->
     delimiter = get(@, 'delimiter') ? DEFAULT_DELIMITER
     get(delimiter, '0')
@@ -424,7 +426,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   , '@each.hasFocus'
 
   _hasFocusDidChange: Ember.observer ->
-    unless get(@, 'hasFocus')
+    if get(@, 'tagOnFocusOut') and !get(@, 'hasFocus')
       Ember.run.later @, ->
         return unless get(@, 'state') is 'inDOM' and !@_hasFocus()
         inputView = get(@, 'inputView')
