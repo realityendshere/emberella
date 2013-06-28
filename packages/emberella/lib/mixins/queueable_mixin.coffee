@@ -137,7 +137,7 @@ Emberella.QueueableMixin = Ember.Mixin.create
   ###
   isComplete: Ember.computed ->
     !!(get(@, 'queued.length') > 0 and get(@, 'completed.length') >= get(@, 'queued.length') and get(@, 'inProgress.length') is 0)
-  .property 'completed', 'queued', 'inProgress'
+  .property 'completed', 'queued', 'inProgress', 'completed.length', 'queued.length', 'inProgress.length'
 
   ###
     A state property to inject into queued objects.
