@@ -1,3 +1,5 @@
+#= require ../helpers/big_data_helpers
+
 ###
 @module emberella
 @submodule emberella-mixins
@@ -276,9 +278,9 @@ Emberella.MQMixin.reopen
 
     @property simultaneous
     @type Integer
-    @default 4
+    @default 3
   ###
-  simultaneous: 4
+  simultaneous: 3
 
   ###
     An array of objects in the queue. This property will always contain all
@@ -435,12 +437,15 @@ Emberella.MQMixin.reopen
     @chainable
   ###
   addToQueue: (items...) ->
-    items = [].concat.apply([], [].concat(items)) #flatten splat
+    items = Ember.A([].concat.apply([], [].concat(items))) #flatten splat
     queue = get(@, 'queue')
 
-    for item in items
-      queueItem = Emberella.MQObject.create(content: item, queue: @)
-      queue.pushObject(queueItem)
+    toBeAdded = []
+
+    processItem = (item) ->
+      toBeAdded.push(Emberella.MQObject.create(content: item, queue: @))
+
+    Emberella.forEachAsync @, items, processItem, -> queue.pushObjects(toBeAdded)
 
     @
 
