@@ -445,7 +445,9 @@ Emberella.MQMixin.reopen
     processItem = (item) ->
       toBeAdded.push(Emberella.MQObject.create(content: item, queue: @))
 
-    Emberella.forEachAsync @, items, processItem, -> queue.pushObjects(toBeAdded)
+    Emberella.forEachAsync(@, items, processItem, ->
+      queue.pushObjects(toBeAdded)
+    )
 
     @
 
