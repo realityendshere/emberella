@@ -5,7 +5,7 @@ Emberella.forEachAsync = (context, objects, eachFn, completeFn, runTime = 200, w
   processItems = (items, process, callback) ->
     itemsToProcess = Array.prototype.slice.call(items)
     i = null
-    Ember.run.later(context, ->
+    Ember.run(context, ->
       start = +Date.now()
       process.call(context, itemsToProcess.shift(), (if i? then ++i else 0))
       while itemsToProcess.length > 0 and +Date.now() - start < runTime
@@ -16,6 +16,6 @@ Emberella.forEachAsync = (context, objects, eachFn, completeFn, runTime = 200, w
 
       else
         callback.call(context) if callback? and callback.call?
-    , runTime)
+    )
 
   processItems objects, eachFn, completeFn
