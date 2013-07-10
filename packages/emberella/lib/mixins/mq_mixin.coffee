@@ -84,6 +84,9 @@ Emberella.MQStateManager = Ember.StateManager.extend
     activate: (manager) ->
       manager.transitionTo('active')
 
+    skip: (manager) ->
+      manager.transitionTo('completed')
+
     didError: (manager) ->
       manager.transitionTo('error')
 
@@ -278,9 +281,9 @@ Emberella.MQMixin.reopen
 
     @property simultaneous
     @type Integer
-    @default 3
+    @default 4
   ###
-  simultaneous: 3
+  simultaneous: 4
 
   ###
     An array of objects in the queue. This property will always contain all
@@ -439,11 +442,23 @@ Emberella.MQMixin.reopen
   addToQueue: (items...) ->
     items = Ember.A([].concat.apply([], [].concat(items))) #flatten splat
     queue = get(@, 'queue')
+    itemCompleteProperty = get @, 'itemCompleteProperty'
+    itemErrorProperty = get @, 'itemErrorProperty'
 
     toBeAdded = []
 
     processItem = (item) ->
-      toBeAdded.push(Emberella.MQObject.create(content: item, queue: @))
+      queueItem = Emberella.MQObject.create(content: item, queue: @)
+
+      #Skip items that are already complete
+      if get(queueItem, itemCompleteProperty)
+        queueItem.send 'skip'
+
+      #If error, put into error state
+      else if get(queueItem, itemErrorProperty)
+        queueItem.send 'didError'
+
+      toBeAdded.push(queueItem)
 
     Emberella.forEachAsync(@, items, processItem, ->
       queue.pushObjects(toBeAdded)
@@ -686,8 +701,14 @@ Emberella.MQMixin.reopen
   _didActivateQueueItem: (item) ->
     itemCompleteProperty = get @, 'itemCompleteProperty'
     itemErrorProperty = get @, 'itemErrorProperty'
-    item.addObserver(itemCompleteProperty, @, '_handleStatusChange')
-    item.addObserver(itemErrorProperty, @, '_handleStatusChange')
+
+    if get(item, itemCompleteProperty)
+      Ember.run.next(@, -> @markAsComplete item )
+    else if get(item, itemErrorProperty)
+      @markAsError item
+    else
+      item.addObserver(itemCompleteProperty, @, '_handleStatusChange')
+      item.addObserver(itemErrorProperty, @, '_handleStatusChange')
 
   ###
     @private
