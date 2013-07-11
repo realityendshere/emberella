@@ -121,13 +121,13 @@ Emberella.FlexibleTextField = Ember.TextField.extend Ember.StyleBindingsMixin, E
 
     #Run later to allow the DOM to update sizer node prior to computing width
     Ember.run.later(@, ->
-      width = Math.max(+sizer.width(), get(@, 'minWidth'))
+      width = Math.max(2 + sizer.outerWidth(), get(@, 'minWidth'))
       width = width + 8 if value isnt ''
       maxWidth = +get(@, 'maxWidth')
       width = maxWidth if maxWidth and width > maxWidth
       set @, 'width', width
     , 1)
-  , "value", "hasFocus"
+  , "value", "placeholder", "hasFocus"
 
   ###
     Create an invisible element to "mirror" the text field. Uses a jQuery
@@ -157,12 +157,11 @@ Emberella.FlexibleTextField = Ember.TextField.extend Ember.StyleBindingsMixin, E
         whiteSpace: 'nowrap'
       )
 
-      #Insert the sizer node and stash a reference to it in a property
+      #Insert the sizer node
       @$().after(sizer)
-      set(@, SIZER_PROPERTY, sizer)
 
     Ember.run.schedule 'afterRender', @, syncStyles
-
+    set(@, SIZER_PROPERTY, sizer)
     sizer
 
   ###
@@ -175,6 +174,7 @@ Emberella.FlexibleTextField = Ember.TextField.extend Ember.StyleBindingsMixin, E
   ###
   updateSizer: ->
     value = get(@, 'value') ? ''
+    value = get(@, 'placeholder') if value is ''
     sizer = get(@, SIZER_PROPERTY) ? @createSizer()
     value = sizer.text(value).html().replace(/\s/gm, "&nbsp;")
     sizer.html(value)
