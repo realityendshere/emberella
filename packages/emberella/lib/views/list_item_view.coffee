@@ -64,7 +64,7 @@ Emberella.ListItemView = Emberella.View.extend Ember.StyleBindingsMixin,
     @type Array
     @default ['top', 'display', 'position', 'height']
   ###
-  styleBindings: ['top', 'display', 'position', 'height']
+  styleBindings: ['top', 'display', 'position', 'height', 'pointer-events']
 
   ###
     In pixels, the height of each listing. Typically, this value is provided
@@ -99,6 +99,10 @@ Emberella.ListItemView = Emberella.View.extend Ember.StyleBindingsMixin,
     @default 'emberella-list-item-view'
   ###
   fluctuateListingPrefix: LIST_ITEM_CLASS
+
+  "pointer-events": Ember.computed ->
+    if get(@, 'parentView.isScrolling') then 'none' else undefined
+  .property('parentView.isScrolling')
 
   ###
     Set `absolute` positioning for each listing.

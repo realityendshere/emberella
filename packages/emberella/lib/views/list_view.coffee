@@ -87,6 +87,16 @@ Emberella.ListView = Emberella.CollectionView.extend Ember.ScrollHandlerMixin, E
   itemViewClass: Emberella.ListItemView
 
   ###
+    List view's current scrolling state. True while scroll top is changing,
+    false otherwise.
+
+    @property isScrolling
+    @type Boolean
+    @default false
+  ###
+  isScrolling: false
+
+  ###
     The current scroll position of the list.
 
     @property scrollTop
@@ -244,6 +254,16 @@ Emberella.ListView = Emberella.CollectionView.extend Ember.ScrollHandlerMixin, E
       @_recalculateDimensions()
     ), get(@, 'resizeThrottle'))
   .property 'resizeThrottle'
+
+  ###
+    A computed property that returns a debounced scroll handling function
+
+    @property debouncedOnScroll
+  ###
+  debouncedOnScroll: Ember.computed ->
+    Emberella.debounce((=>
+      set @, 'isScrolling', false
+    ), 30)
 
   ###
     Calls the throttled layout recalculation method.
@@ -454,7 +474,10 @@ Emberella.ListView = Emberella.CollectionView.extend Ember.ScrollHandlerMixin, E
 
     @event onScroll
   ###
-  onScroll: (e) -> set(@, 'scrollTop', e.target.scrollTop)
+  onScroll: (e) ->
+    set(@, 'isScrolling', true)
+    set(@, 'scrollTop', e.target.scrollTop)
+    get(@, 'debouncedOnScroll')()
 
   ###
     Called when scrolling reaches the top of the listing.
@@ -527,7 +550,9 @@ Emberella.ListView = Emberella.CollectionView.extend Ember.ScrollHandlerMixin, E
     @method _createScrollingView
   ###
   _createScrollingView: ->
+    scrollTag = Ember.CollectionView.CONTAINER_MAP[get(@, 'tagName')]
     Ember.View.createWithMixins(Ember.StyleBindingsMixin,
+      tagName: scrollTag
       styleBindings: ['height', 'width']
       heightBinding: 'parentView.totalHeight'
       width: 1
