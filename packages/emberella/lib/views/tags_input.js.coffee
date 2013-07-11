@@ -81,7 +81,6 @@ Emberella.TagItemView = Ember.View.extend Ember.StyleBindingsMixin, Emberella.Fo
     @removeSelf()
 
 Emberella.TagItemInput = Emberella.FlexibleTextField.extend Emberella.FocusableMixin, Emberella.KeyboardControlMixin,
-  placeholderBinding: 'parentView.placeholder'
   _delimiter_patternBinding: 'parentView._delimiter_pattern'
 
   _captureValue: (value) ->
@@ -98,6 +97,10 @@ Emberella.TagItemInput = Emberella.FlexibleTextField.extend Emberella.FocusableM
     return false unless parentView.contains value
 
     true
+
+  placeholder: Ember.computed ->
+    if get(@, 'parentView.value') then '' else get(@, 'parentView.placeholder')
+  .property 'parentView.placeholder', 'parentView.value'
 
   captureValue: (value = get(@, 'value'), retainFocus = true) ->
     parentView = get(@, 'parentView')
