@@ -10,6 +10,8 @@ set = Ember.set
 typeOf = Ember.typeOf
 
 DEFAULT_DELIMITER = ','
+ESCAPE_REG_EXP = /[\-\[\]{}()*+?.,\\\^$|#\s]/g
+ESCAPE_REPLACEMENT = '\\$&'
 
 Emberella.TagItemView = Ember.View.extend Ember.StyleBindingsMixin, Emberella.FocusableMixin, Emberella.KeyboardControlMixin,
   tagName: 'span'
@@ -111,30 +113,29 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   ].join(' ')
 
   _primary_delimiter: Ember.computed ->
-    delimiter = get(@, 'delimiter') ? DEFAULT_DELIMITER
-    get(delimiter, '0')
-    if typeOf delimiter is 'string' then delimiter else DEFAULT_DELIMITER
+    delimiter = get(@, 'delimiter') || DEFAULT_DELIMITER
+    delimiter = get(delimiter, '0')
+    if typeOf(delimiter) is 'string' then delimiter else DEFAULT_DELIMITER
   .property('delimiter', 'delimiter.length').volatile().readOnly()
 
   _delimiter_pattern: Ember.computed ->
-    delimiter = get(@, 'delimiter') ? DEFAULT_DELIMITER
+    delimiter = get(@, 'delimiter') || DEFAULT_DELIMITER
+
+    if typeOf(delimiter) is 'string' or typeOf(delimiter) is 'number'
+      delimiter = (delimiter + '').split('')
 
     if Ember.isArray(delimiter)
-      delimiter = Ember.A(delimiter.slice())
-      delimiter = delimiter.filter((item) ->
-        typeof item is 'string'
-      )
-      delimiter = Ember.A(DEFAULT_DELIMITER) if delimiter.length is 0
-    else if typeOf delimiter is 'string' or typeOf delimiter is 'number'
-      delimiter = (delimiter + '').split('')
-    else
-      delimiter = Ember.A(DEFAULT_DELIMITER)
+      delimiter = Ember.A(delimiter.slice()).map((item) =>
+        if typeOf(item) is 'string' or typeOf(item) is 'number'
+          return @_escapeString(item.toString())
+        else if typeOf(item) is 'regexp'
+          return item.toString().split('/').slice(1, -1).join('/')
+        null
+      ).compact()
 
-    patterns = delimiter.map((item) ->
-      '\\' + item.split('').join('\\')
-    )
+    delimiter = Ember.A(@_escapeString(DEFAULT_DELIMITER)) unless Ember.isArray(delimiter)
 
-    new RegExp(patterns.join('|'), 'g')
+    new RegExp(delimiter.join('|'), 'g')
   .property('delimiter', 'delimiter.length').volatile().readOnly()
 
   value: Ember.computed (key, value) ->
@@ -473,6 +474,9 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
 
     @_insertInputView()
     null
+
+  _escapeString: (str) ->
+    str.replace(ESCAPE_REG_EXP, ESCAPE_REPLACEMENT)
 
   _splitStringByDelimiter: (str = '', result = Ember.A()) ->
     pattern = get(@, '_delimiter_pattern')
