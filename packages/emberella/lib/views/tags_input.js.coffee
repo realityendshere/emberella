@@ -13,7 +13,9 @@ DEFAULT_DELIMITER = ','
 
 Emberella.TagItemView = Ember.View.extend Ember.StyleBindingsMixin, Emberella.FocusableMixin, Emberella.KeyboardControlMixin,
   tagName: 'span'
+
   classNames: ['emberella-tag-item']
+
   styleBindings: ['display']
 
   tabindex: -1
@@ -21,197 +23,69 @@ Emberella.TagItemView = Ember.View.extend Ember.StyleBindingsMixin, Emberella.Fo
   content: null
 
   deleteCharacterBinding: 'parentView.deleteCharacter'
+
   deleteTitleBinding: 'parentView.deleteTitle'
 
+  templateBinding: 'parentView.template'
+
   display: Ember.computed ->
-    content = jQuery.trim get(@, 'content')
-    'none' unless content
+    'none' if jQuery.trim(get(@, 'content')) is ''
   .property 'content'
 
-  defaultTemplate: Ember.Handlebars.compile [
-    '<span class="emberella-tag-item-content">{{view.content}}</span>'
-    '{{#if view.deleteCharacter}}'
-      '<a href="#" {{bindAttr title="view.deleteTitle"}} {{action "removeSelf" target=view bubbles=false}}>{{view.deleteCharacter}}</a>'
-    '{{/if}}'
-  ].join(' ')
+  sendToParent: (message, arg = @, args...) ->
+    return @ unless (parentView = get(@, 'parentView'))
+    args = [arg].concat(args)
+    parentView[message].apply(parentView, args) if typeOf(parentView[message]) is 'function'
+    @
 
   removeSelf: ->
-    parentView = get(@, 'parentView')
-    value = get @, 'content'
-    parentView.removeValue value
-    @
+    @sendToParent('removeTag', get(@, 'content'))
 
   backspacePressed: (e, alt, ctrl, meta, shift) ->
     return if alt or ctrl or meta or shift
-    get(@, 'parentView').cursorAfter @
+    @sendToParent 'cursorAfter'
     @removeSelf()
 
   deletePressed: Ember.aliasMethod 'backspacePressed'
 
   rightArrowPressed: (e, alt, ctrl, meta, shift) ->
     return if alt or ctrl or meta
-    parentView = get(@, 'parentView')
-    if shift
-      parentView.focusAfter @
-    else
-      parentView.cursorAfter @
+    @sendToParent(if shift then 'focusAfter' else 'cursorAfter')
 
   leftArrowPressed: (e, alt, ctrl, meta, shift) ->
     return if alt or ctrl or meta
-    parentView = get(@, 'parentView')
-    if shift
-      parentView.focusBefore @
-    else
-      parentView.moveCursor(@, 0)
+    if shift then @sendToParent('focusBefore') else @sendToParent('moveCursor', @, 0)
 
   enterPressed: Ember.aliasMethod 'rightArrowPressed'
   tabPressed: Ember.aliasMethod 'rightArrowPressed'
 
+  keyDown: (e) ->
+    e.stopPropagation()
+    @_super.apply @, arguments
+
   keyPress: (e) ->
     @_super(e)
     return if e.isDefaultPrevented()
-    alt = e.altKey
-    ctrl = e.ctrlKey
-    meta = e.metaKey
-    shift = e.shiftKey
-    code = e.keyCode
-    parentView = get(@, 'parentView')
-    return if meta or ctrl
-    parentView.cursorAfter @
-    @removeSelf()
+    @backspacePressed(e, false, e.ctrlKey, e.metaKey, false)
 
 Emberella.TagItemInput = Emberella.FlexibleTextField.extend Emberella.FocusableMixin, Emberella.KeyboardControlMixin,
-  _delimiter_patternBinding: 'parentView._delimiter_pattern'
-
-  _captureValue: (value) ->
-    return false unless value?
-
-    parentView = get(@, 'parentView')
-    return false unless parentView?
-    value = jQuery.trim(value)
-
-    return false if parentView.contains value
-
-    parentView.addValue value
-
-    return false unless parentView.contains value
-
-    true
-
   placeholder: Ember.computed ->
     if get(@, 'parentView.value') then '' else get(@, 'parentView.placeholder')
   .property 'parentView.placeholder', 'parentView.value'
 
-  captureValue: (value = get(@, 'value'), retainFocus = true) ->
-    parentView = get(@, 'parentView')
-    delimiter = get @, '_delimiter_pattern'
-    values = value.split delimiter
-    captured = false
-
-    parentView?.beginPropertyChanges()
-
-    for v in values
-      captured = true if @_captureValue(v)
-
-    if captured
-      @reset()
-      parentView?.cursorAfter(@) if retainFocus
-
-    parentView?.endPropertyChanges()
-    captured
-
-  reset: ->
-    set @, 'value', ''
-    @
-
-  focus: (e, beginning = false) ->
-    return @ unless get(@, 'state') is 'inDOM'
-    element = get(@, 'element')
-    element?.focus()
-    selection = if beginning then 0 else get(@, 'value.length')
-    element.selectionStart = selection
-    element.selectionEnd = selection
-    @adjustWidth()
-    @
-
-  isSelectionAtStart: ->
-    return false if get(@, 'state') isnt 'inDOM'
-    element = get(@, 'element')
-    !!(element.selectionStart is 0 and element.selectionEnd is 0)
-
-  isSelectionAtEnd: ->
-    return false if get(@, 'state') isnt 'inDOM'
-    element = get(@, 'element')
-    len = get(@, 'value.length')
-    !!(element.selectionStart is len and element.selectionEnd is len)
-
-  enterPressed: (e, alt, ctrl, meta, shift) ->
-    return if alt or ctrl or meta or shift
-    e.preventDefault()
-    @captureValue()
-
-  backspacePressed: (e, alt, ctrl, meta, shift) ->
-    return if alt or ctrl or meta or shift
-    value = get @, 'value'
-    return unless @isSelectionAtStart()
-    e.preventDefault()
-    parentView = get(@, 'parentView')
-    parentView.focusBefore(@) if get(parentView, 'cursor')
-
-  deletePressed: (e, alt, ctrl, meta, shift) ->
-    return if alt or ctrl or meta or shift
-    value = get @, 'value'
-    return unless @isSelectionAtEnd()
-    e.preventDefault()
-    parentView = get(@, 'parentView')
-    parentView.focusAfter @
-
-  rightArrowPressed: (e, alt, ctrl, meta, shift) ->
-    return if alt or ctrl or meta
-    return unless @isSelectionAtEnd()
-    e.preventDefault()
-    parentView = get(@, 'parentView')
-
-    if shift
-      parentView.focusAfter @
-    else
-      parentView.cursorAfter(@) unless @captureValue()
-
-  leftArrowPressed: (e, alt, ctrl, meta, shift) ->
-    return if alt or ctrl or meta
-    return unless @isSelectionAtStart()
-    e.preventDefault()
-    parentView = get(@, 'parentView')
-    if shift
-      parentView.focusBefore @
-    else
-      parentView.cursorBefore(@)
-
-  didValueChange: Ember.observer ->
-    value = get(@, 'value')
-    delimiter = get @, '_delimiter_pattern'
-    regexString = delimiter.toString().split('/').slice(1, -1).join('/')
-    regexString = ['.+(', regexString, ')$'].join('')
-    pattern = new RegExp(regexString, 'g')
-
-    @captureValue(value) if delimiter.test(value) and (pattern.test(value) or @_didPaste)
-    @_didPaste = false
-  , 'value'
-
   paste: (e) -> @_didPaste = true
 
 Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Emberella.FocusableMixin, Emberella.KeyboardControlMixin,
-
   isTagsInput: true
+
+  _value: null
+  _cursor: null
 
   classNames: ['emberella-tags-input']
   styleBindings: ['width', 'height']
 
   itemViewClass: Emberella.TagItemView
   inputViewClass: Emberella.TagItemInput
-
-  _value: null
-  _cursor: null
 
   content: null
 
@@ -228,6 +102,13 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   deleteTitle: "Remove tag"
 
   tagOnFocusOut: true
+
+  defaultTemplate: Ember.Handlebars.compile [
+    '<span class="emberella-tag-item-content">{{view.content}}</span>'
+    '{{#if view.deleteCharacter}}'
+      '<a href="#" {{bindAttr title="view.deleteTitle"}} {{action "removeSelf" target=view bubbles=false}}>{{view.deleteCharacter}}</a>'
+    '{{/if}}'
+  ].join(' ')
 
   _primary_delimiter: Ember.computed ->
     delimiter = get(@, 'delimiter') ? DEFAULT_DELIMITER
@@ -299,6 +180,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
 
     @_delimiterDidChange()
     @_renderList()
+
     ret
 
   contains: (value) ->
@@ -307,16 +189,33 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     return false unless content?
     content.contains value
 
-  addValue: (value, idx = get(@, 'cursor')) ->
-    return @ unless value?
-    value = jQuery.trim(value + '')
-    return @ if value is '' or @contains(value)
+  addTag: (value = '', idx = get(@, 'cursor')) ->
+    return false if @contains(value = jQuery.trim(value)) or value is ''
+
     get(@, 'content').insertAt idx, value
     set(@, 'cursor', idx + 1)
     @didAddValue value, idx
-    @
 
-  removeValue: (value) ->
+    true
+
+  addTags: (value = get(@, 'inputView.value'), retainFocus = true) ->
+    delimiter = get @, '_delimiter_pattern'
+    values = value.split delimiter
+    captured = false
+
+    @beginPropertyChanges()
+
+    for v in values
+      captured = true if @addTag(v)
+
+    if captured
+      @reset()
+      @cursorAfter(get(@, 'inputView')) if retainFocus
+
+    @endPropertyChanges()
+    captured
+
+  removeTag: (value) ->
     return @ unless value?
 
     content = get(@, 'content')
@@ -392,8 +291,35 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     idx = childViews.indexOf view
     shift = shift - 1 if idx > cursor
     set(@, 'cursor', idx + shift)
-    @_focusOnInputView(true, (shift >= 0))
+    @_focusOnInputView(true, (shift < 0))
     @
+
+  focus: (e, beginning = false) ->
+    inputView = get @, 'inputView'
+    return @ unless inputView? and get(inputView, 'state') is 'inDOM'
+    element = get(inputView, 'element')
+    element?.focus()
+    selection = if beginning then 0 else get(inputView, 'value.length')
+    element.selectionStart = selection
+    element.selectionEnd = selection
+    @
+
+  reset: ->
+    set @, 'inputView.value', ''
+    @
+
+  isSelectionAtStart: ->
+    inputView = get @, 'inputView'
+    return @ unless inputView? and get(inputView, 'state') is 'inDOM'
+    element = get(inputView, 'element')
+    !!(element.selectionStart is 0 and element.selectionEnd is 0)
+
+  isSelectionAtEnd: ->
+    inputView = get @, 'inputView'
+    return @ unless inputView? and get(inputView, 'state') is 'inDOM'
+    element = get(inputView, 'element')
+    len = get(inputView, 'value.length')
+    !!(element.selectionStart is len and element.selectionEnd is len)
 
   didAddValue: Ember.K
   didRemoveValue: Ember.K
@@ -413,6 +339,47 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     idx = idx - 1 if idx > get(@, 'cursor')
     set(@, 'cursor', if nearest then idx else get(@, 'content.length'))
     @_focusOnInputView(true)
+
+  enterPressed: (e, alt, ctrl, meta, shift) ->
+    return if alt or ctrl or meta or shift
+    e.preventDefault()
+    @addTags()
+
+  backspacePressed: (e, alt, ctrl, meta, shift) ->
+    return if alt or ctrl or meta or shift or !@isSelectionAtStart() or !(inputView = get(@, 'inputView'))
+    e.preventDefault()
+    @focusBefore(inputView)
+
+  deletePressed: (e, alt, ctrl, meta, shift) ->
+    return if alt or ctrl or meta or shift or !@isSelectionAtEnd() or !(inputView = get(@, 'inputView'))
+    e.preventDefault()
+    @focusAfter(inputView)
+
+  rightArrowPressed: (e, alt, ctrl, meta, shift) ->
+    return if alt or ctrl or meta or !@isSelectionAtEnd() or !(inputView = get(@, 'inputView'))
+    e.preventDefault()
+    if shift
+      @focusAfter inputView
+    else
+      @cursorAfter(inputView) unless @addTags()
+
+  leftArrowPressed: (e, alt, ctrl, meta, shift) ->
+    return if alt or ctrl or meta or !@isSelectionAtStart() or !(inputView = get(@, 'inputView'))
+    e.preventDefault()
+    if shift then @focusBefore(inputView) else @cursorBefore(inputView)
+
+  didInputValueChange: Ember.observer ->
+    inputView = get(@, 'inputView')
+    value = get(inputView, 'value')
+
+    delimiter = get @, '_delimiter_pattern'
+    regexString = delimiter.toString().split('/').slice(1, -1).join('/')
+    regexString = ['.+(', regexString, ')$'].join('')
+    pattern = new RegExp(regexString, 'g')
+
+    @addTags(value) if delimiter.test(value) and (pattern.test(value) or inputView._didPaste)
+    inputView._didPaste = false
+  , 'inputView.value'
 
   _cursorDidChange: Ember.observer ->
     @_updateChildViews()
@@ -437,6 +404,91 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
         set @, 'cursor', get(@, 'childViews.length')
       , 100
   , 'hasFocus'
+
+  _renderList: ->
+    Ember.run.schedule 'afterRender', @, ->
+      @_updateChildViews()
+
+  _rerenderList: ->
+    @destroyAllChildren()
+    @_renderList()
+
+  _hasFocus: ->
+    focused = @find((childView) ->
+      get(childView, 'hasFocus')
+    )
+    return !!(focused)
+
+  _focusOnInputView: (force, beginning) ->
+    inputView = get(@, 'inputView')
+
+    return unless force or @_hasFocus()
+
+    if get(inputView, 'state') is 'inDOM'
+      @focus({}, beginning)
+    else
+      Ember.run.schedule 'afterRender', @, ->
+        @focus({}, beginning) if force or @_hasFocus()
+
+  _insertInputView: ->
+    inputView = get(@, 'inputView')
+    inputView = if inputView and !get(inputView, 'isDestroyed') and !get(inputView, 'isDestroying') then inputView else @_createInputView()
+    cursor = get @, 'cursor'
+    @insertAt(cursor, inputView)
+    null
+
+  _removeInputView: ->
+    inputView = get(@, 'inputView')
+    inputView = if inputView and !get(inputView, 'isDestroyed') and !get(inputView, 'isDestroying') then inputView else @_createInputView()
+    inputView.removeFromParent()
+    null
+
+  _createInputView: ->
+    inputView = @createChildView(@getInputViewClass())
+    set @, 'inputView', inputView
+    inputView
+
+  _updateChildViews: ->
+    return if get(@, 'isDestroyed')
+    @_removeInputView()
+
+    childViews = @
+    childViewsLength = Math.max(0, get(@, 'length'))
+
+    itemViewClass = @getItemViewClass()
+
+    content = get(@, 'content')
+    contentLength = get(@, 'content.length')
+
+    for i in [0...Math.max(childViewsLength, contentLength)]
+      childView = @objectAt(i)
+
+      if i < contentLength
+        unless childView instanceof itemViewClass
+          childView = @createChildView(itemViewClass)
+          @insertAt(i, childView)
+        set childView, 'content', content[i]
+      else
+        childView?.removeFromParent() if @isItemView childView
+
+    @_insertInputView()
+    null
+
+  _splitStringByDelimiter: (str = '', result = Ember.A()) ->
+    pattern = get(@, '_delimiter_pattern')
+    values = str.split(pattern)
+    result.clear()
+
+    for v in values
+      v = jQuery.trim v
+      continue if !v? or v is ''
+      result.addObject v
+
+    result
+
+  ################################
+  ### CONTENT ARRAY MANAGEMENT ###
+  ################################
 
   ###
     Hook for responding to the content array being replaced with a new
@@ -555,84 +607,3 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   _clearContent: ->
     content = get(@, 'content')
     content.clear() if content
-
-  _renderList: ->
-    Ember.run.schedule 'afterRender', @, ->
-      @_updateChildViews()
-
-  _rerenderList: ->
-    @destroyAllChildren()
-    @_renderList()
-
-  _hasFocus: ->
-    focused = @find((childView) ->
-      get(childView, 'hasFocus')
-    )
-    return !!(focused)
-
-  _focusOnInputView: (force, beginning) ->
-    inputView = get(@, 'inputView')
-
-    return unless force or @_hasFocus()
-
-    if get(inputView, 'state') is 'inDOM'
-      inputView.focus({}, beginning)
-    else
-      Ember.run.schedule 'afterRender', @, ->
-        inputView.focus({}, beginning) if force or @_hasFocus()
-
-  _insertInputView: ->
-    inputView = get(@, 'inputView')
-    inputView = if inputView and !get(inputView, 'isDestroyed') and !get(inputView, 'isDestroying') then inputView else @_createInputView()
-    cursor = get @, 'cursor'
-    @insertAt(cursor, inputView)
-    null
-
-  _removeInputView: ->
-    inputView = get(@, 'inputView')
-    inputView = if inputView and !get(inputView, 'isDestroyed') and !get(inputView, 'isDestroying') then inputView else @_createInputView()
-    inputView.removeFromParent()
-    null
-
-  _createInputView: ->
-    inputView = @createChildView(@getInputViewClass())
-    set @, 'inputView', inputView
-    inputView
-
-  _updateChildViews: ->
-    return if get(@, 'isDestroyed')
-    @_removeInputView()
-
-    childViews = @
-    childViewsLength = Math.max(0, get(@, 'length'))
-
-    itemViewClass = @getItemViewClass()
-
-    content = get(@, 'content')
-    contentLength = get(@, 'content.length')
-
-    for i in [0...Math.max(childViewsLength, contentLength)]
-      childView = @objectAt(i)
-
-      if i < contentLength
-        unless childView instanceof itemViewClass
-          childView = @createChildView(itemViewClass)
-          @insertAt(i, childView)
-        set childView, 'content', content[i]
-      else
-        childView?.removeFromParent() if @isItemView childView
-
-    @_insertInputView()
-    null
-
-  _splitStringByDelimiter: (str = '', result = Ember.A()) ->
-    pattern = get(@, '_delimiter_pattern')
-    values = str.split(pattern)
-    result.clear()
-
-    for v in values
-      v = jQuery.trim v
-      continue if !v? or v is ''
-      result.addObject v
-
-    result
