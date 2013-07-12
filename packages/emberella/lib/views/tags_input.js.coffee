@@ -192,6 +192,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
 
   addTag: (value = '', idx = get(@, 'cursor')) ->
     return false if @contains(value = jQuery.trim(value)) or value is ''
+    return @addTags(value) if get(@, '_delimiter_pattern').test(value)
 
     get(@, 'content').insertAt idx, value
     set(@, 'cursor', idx + 1)
@@ -199,7 +200,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
 
     true
 
-  addTags: (value = get(@, 'inputView.value'), retainFocus = true) ->
+  addTags: (value = get(@, 'inputView.value'), retainFocus = @_hasFocus()) ->
     delimiter = get @, '_delimiter_pattern'
     values = value.split delimiter
     captured = false
