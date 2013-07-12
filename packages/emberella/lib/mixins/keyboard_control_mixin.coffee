@@ -70,6 +70,7 @@ Emberella.KeyboardControlMixin = Ember.Mixin.create
 
     if typeof @[method] is 'function'
       e.preventDefault() if map[code]? and nodeName isnt "INPUT" and nodeName isnt "SELECT" and nodeName isnt "TEXTAREA"
+      e.method = method
       @[method].call(@, e, alt, ctrl, meta, shift)
 
   ###
