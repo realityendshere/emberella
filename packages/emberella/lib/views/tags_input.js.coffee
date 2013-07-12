@@ -118,7 +118,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     if typeOf(delimiter) is 'string' then delimiter else DEFAULT_DELIMITER
   .property('delimiter', 'delimiter.length').volatile().readOnly()
 
-  _delimiter_pattern: Ember.computed ->
+  _delimiter: Ember.computed ->
     delimiter = get(@, 'delimiter') || DEFAULT_DELIMITER
 
     if typeOf(delimiter) is 'string' or typeOf(delimiter) is 'number'
@@ -134,9 +134,12 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
       ).compact()
 
     delimiter = Ember.A(@_escapeString(DEFAULT_DELIMITER)) unless Ember.isArray(delimiter)
+    delimiter.join('|')
+  .property('delimiter', 'delimiter.length').readOnly()
 
-    new RegExp(delimiter.join('|'), 'g')
-  .property('delimiter', 'delimiter.length').volatile().readOnly()
+  _delimiter_pattern: Ember.computed ->
+    new RegExp(get(@, '_delimiter'), 'g')
+  .volatile().readOnly()
 
   value: Ember.computed (key, value) ->
     delimiter = get(@, '_primary_delimiter')
@@ -398,12 +401,14 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   , '@each.hasFocus'
 
   _hasFocusDidChange: Ember.observer ->
-    if get(@, 'tagOnFocusOut') and !get(@, 'hasFocus')
+    if !get(@, 'hasFocus')
+      # The field may appear to lose focus frequently as the focus shifts
+      # between child views. The run later helps to verify the focus has, in
+      # fact, completely left the field.
       Ember.run.later @, ->
         return unless get(@, 'state') is 'inDOM' and !@_hasFocus()
-        inputView = get(@, 'inputView')
-        inputView.captureValue(null, false) if inputView? and inputView.captureValue
-        set @, 'cursor', get(@, 'childViews.length')
+        @addTags() if get(@, 'tagOnFocusOut')
+        set(@, 'cursor', get(@, 'childViews.length')) if get(@, 'inputView.value') is ''
       , 100
   , 'hasFocus'
 
