@@ -24,14 +24,22 @@ Emberella.TagItemView = Ember.View.extend Ember.StyleBindingsMixin, Emberella.Fo
 
   content: null
 
+  contentPathBinding: 'parentView.contentPath'
+
   deleteCharacterBinding: 'parentView.deleteCharacter'
 
   deleteTitleBinding: 'parentView.deleteTitle'
 
   templateBinding: 'parentView.template'
 
+  displayContent: Ember.computed ->
+    return '' unless (content = get @, 'content')?
+    contentPath = get @, 'contentPath'
+    get(content, contentPath) ? ''
+  .property 'content', 'contentPath'
+
   display: Ember.computed ->
-    'none' if jQuery.trim(get(@, 'content')) is ''
+    if Ember.isEmpty(get(@, 'content')) then 'none' else undefined
   .property 'content'
 
   sendToParent: (message, arg = @, args...) ->
@@ -84,9 +92,11 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   _cursor: null
 
   classNames: ['emberella-tags-input']
+
   styleBindings: ['width', 'height']
 
   itemViewClass: Emberella.TagItemView
+
   inputViewClass: Emberella.TagItemInput
 
   content: null
@@ -96,17 +106,21 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   tabindex: -1
 
   width: 'auto'
+
   height: 'auto'
 
   placeholder: ''
 
   deleteCharacter: 'x'
+
   deleteTitle: "Remove tag"
 
   tagOnFocusOut: true
 
+  contentPath: ''
+
   defaultTemplate: Ember.Handlebars.compile [
-    '<span class="emberella-tag-item-content">{{view.content}}</span>'
+    '<span class="emberella-tag-item-content">{{view.displayContent}}</span>'
     '{{#if view.deleteCharacter}}'
       '<a href="#" {{bindAttr title="view.deleteTitle"}} {{action "removeSelf" target=view bubbles=false}}>{{view.deleteCharacter}}</a>'
     '{{/if}}'
@@ -143,18 +157,16 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
 
   value: Ember.computed (key, value) ->
     delimiter = get(@, '_primary_delimiter')
+    contentPath = get(@, 'contentPath')
+
     #getter
     if arguments.length is 1
-      content = get @, 'content'
-      return if (content and content.join) then content.join(delimiter) else get(@, '_value')
+      @_contentToValues()
 
     #setter
     else
+      @addTags(value) if get(@, '_value')?
       set(@, '_value', value)
-
-      result = @_splitStringByDelimiter(value, get(@, 'content'))
-
-      set @, 'content', result
       return @
   .property('content.length', 'content').volatile()
 
@@ -175,32 +187,30 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
 
   init: ->
     ret = @_super()
-    content = get(@, 'content')
-
-    if Ember.isArray content
-      @_contentDidChange()
-    else
-      set(@, 'content', Ember.A())
-
-    @_delimiterDidChange()
+    set(@, 'content', get(@, 'content') ? Ember.A())
+    @addTags(get(@, '_value') ? '')
     @_renderList()
 
     ret
 
   contains: (value) ->
-    value = jQuery.trim(value + '')
     content = get(@, 'content')
     return false unless content?
-    content.contains value
+    return true if content.contains value
+    contentPath = get @, 'contentPath'
+
+    match = content.find((obj) ->
+      value is get(obj, contentPath)
+    )
+    !!(match)
 
   addTag: (value = '', idx = get(@, 'cursor')) ->
     return false if @contains(value = jQuery.trim(value)) or value is ''
     return @addTags(value) if get(@, '_delimiter_pattern').test(value)
 
-    get(@, 'content').insertAt idx, value
-    set(@, 'cursor', idx + 1)
-    @didAddValue value, idx
+    return false if @didAddValue(value, idx) is false
 
+    set(@, 'cursor', idx + 1)
     true
 
   addTags: (value = get(@, 'inputView.value'), retainFocus = @_hasFocus()) ->
@@ -214,8 +224,10 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
       captured = true if @addTag(v)
 
     if captured
-      @reset()
-      @cursorAfter(get(@, 'inputView')) if retainFocus
+      Ember.run.scheduleOnce('afterRender', @, ->
+        @reset()
+        @_focusOnInputView(retainFocus)
+      )
 
     @endPropertyChanges()
     captured
@@ -326,7 +338,11 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     len = get(inputView, 'value.length')
     !!(element.selectionStart is len and element.selectionEnd is len)
 
-  didAddValue: Ember.K
+  insertContent: (value, idx) ->
+    get(@, 'content').insertAt idx, value
+
+  didAddValue: Ember.aliasMethod 'insertContent'
+
   didRemoveValue: Ember.K
 
   click: (e) ->
@@ -363,15 +379,22 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   rightArrowPressed: (e, alt, ctrl, meta, shift) ->
     return if alt or ctrl or meta or !@isSelectionAtEnd() or !(inputView = get(@, 'inputView'))
     e.preventDefault()
-    if shift
-      @focusAfter inputView
-    else
-      @cursorAfter(inputView) unless @addTags()
+    if shift then @focusAfter(inputView) else (@addTags() || @cursorAfter(inputView))
 
   leftArrowPressed: (e, alt, ctrl, meta, shift) ->
     return if alt or ctrl or meta or !@isSelectionAtStart() or !(inputView = get(@, 'inputView'))
     e.preventDefault()
     if shift then @focusBefore(inputView) else @cursorBefore(inputView)
+
+  upArrowPressed: (e, alt, ctrl, meta, shift) ->
+    return if alt or ctrl or meta or !(inputView = get(@, 'inputView')) or (get(inputView, 'value') isnt '')
+    e.preventDefault()
+    @cursorBefore(get(@, 'childViews.firstObject'))
+
+  downArrowPressed: (e, alt, ctrl, meta, shift) ->
+    return if alt or ctrl or meta or !(inputView = get(@, 'inputView')) or (get(inputView, 'value') isnt '')
+    e.preventDefault()
+    @cursorAfter(get(@, 'childViews.lastObject'))
 
   didInputValueChange: Ember.observer ->
     inputView = get(@, 'inputView')
@@ -392,9 +415,20 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
 
   _delimiterDidChange: Ember.observer ->
     content = get(@, 'content')
-    _value = content.join(get(@, '_primary_delimiter'))
-    set(@, 'content', @_splitStringByDelimiter(_value, content))
+    @addTags @_contentToValues()
   , 'delimiter'
+
+  _contentToValues: ->
+    content = get @, 'content'
+    delimiter = get @, '_primary_delimiter'
+    contentPath = get @, 'contentPath'
+
+    if Ember.isArray content
+      content = content.map((item) ->
+        if item? and (ret = get(item, contentPath)) then ret else item
+      ).compact()
+
+    return if (content and content.join) then content.join(delimiter) else get(@, '_value')
 
   _focusDidChange: Ember.observer ->
     set @, 'hasFocus', @_hasFocus()
