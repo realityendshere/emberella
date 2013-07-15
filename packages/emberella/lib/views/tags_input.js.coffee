@@ -66,6 +66,12 @@ Emberella.TagItemView = Ember.View.extend Ember.StyleBindingsMixin, Emberella.Fo
     return if alt or ctrl or meta
     if shift then @sendToParent('focusBefore') else @sendToParent('moveCursor', @, 0)
 
+  upArrowPressed: (e, alt, ctrl, meta, shift) ->
+    @sendToParent('upArrowPressed', e, alt, ctrl, meta, shift)
+
+  downArrowPressed: (e, alt, ctrl, meta, shift) ->
+    @sendToParent('downArrowPressed', e, alt, ctrl, meta, shift)
+
   enterPressed: Ember.aliasMethod 'rightArrowPressed'
   tabPressed: Ember.aliasMethod 'rightArrowPressed'
 
