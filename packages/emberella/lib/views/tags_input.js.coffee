@@ -18,6 +18,8 @@ Emberella.TagItemView = Ember.View.extend Ember.StyleBindingsMixin, Emberella.Fo
 
   classNames: ['emberella-tag-item']
 
+  classNameBindings: ['highlighterClasses']
+
   styleBindings: ['display']
 
   tabindex: -1
@@ -32,6 +34,8 @@ Emberella.TagItemView = Ember.View.extend Ember.StyleBindingsMixin, Emberella.Fo
 
   templateBinding: 'parentView.template'
 
+  highlighterBinding: 'parentView.highlighter'
+
   displayContent: Ember.computed ->
     return '' unless (content = get @, 'content')?
     contentPath = get @, 'contentPath'
@@ -41,6 +45,16 @@ Emberella.TagItemView = Ember.View.extend Ember.StyleBindingsMixin, Emberella.Fo
   display: Ember.computed ->
     if Ember.isEmpty(get(@, 'content')) then 'none' else undefined
   .property 'content'
+
+  highlighterClasses: Ember.computed ->
+    return '' unless (content = get(@, 'content')) and (highlighter = get(@, 'highlighter')) and typeOf(highlighter) is 'object'
+    ret = Ember.A()
+    for own key, fn of highlighter
+      continue unless typeOf(fn) is 'function'
+      ret.pushObject(key) if fn.call(@, content)
+
+    ret.join(' ')
+  .property 'highlighter', 'content'
 
   sendToParent: (message, arg = @, args...) ->
     return @ unless (parentView = get(@, 'parentView'))
@@ -124,6 +138,8 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   tagOnFocusOut: true
 
   contentPath: ''
+
+  highlighter: null
 
   defaultTemplate: Ember.Handlebars.compile [
     '<span class="emberella-tag-item-content">{{view.displayContent}}</span>'
