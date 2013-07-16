@@ -68,10 +68,12 @@ Emberella.KeyboardControlMixin = Ember.Mixin.create
     shift = e.shiftKey
     nodeName = e.target.nodeName.toUpperCase()
 
-    if typeof @[method] is 'function'
-      e.preventDefault() if map[code]? and nodeName isnt "INPUT" and nodeName isnt "SELECT" and nodeName isnt "TEXTAREA"
-      e.method = method
-      @[method].call(@, e, alt, ctrl, meta, shift)
+    if Ember.typeOf(@[method]) is 'function' and map[code]? and
+    not(nodeName in ["INPUT", "SELECT", "TEXTAREA"])
+      e.preventDefault()
+
+    e.method = method
+    @trigger(method, e, alt, ctrl, meta, shift)
 
   ###
     @private
