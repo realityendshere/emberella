@@ -122,8 +122,9 @@ Emberella.FlexibleTextField = Ember.TextField.extend Ember.StyleBindingsMixin, E
     #Run later to allow the DOM to update sizer node prior to computing width
     Ember.run.later(@, ->
       return if get(@, 'isDestroyed') or get(@, 'isDestroying')
-      width = Math.max(2 + sizer.outerWidth(), get(@, 'minWidth'))
-      width = width + 8 if value isnt ''
+      width = if value is '' then (2 + sizer.outerWidth()) else sizer.outerWidth()
+      width = Math.max(width, get(@, 'minWidth'))
+      width = width + 4 if value isnt ''
       maxWidth = +get(@, 'maxWidth')
       width = maxWidth if maxWidth and width > maxWidth
       set @, 'width', width
