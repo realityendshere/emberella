@@ -1583,9 +1583,6 @@ Emberella.TagItemView = Ember.View.extend Ember.StyleBindingsMixin, Emberella.Fo
   @extends Emberella.FlexibleTextField
 ###
 Emberella.TagItemInput = Emberella.FlexibleTextField.extend Emberella.FocusableMixin, Emberella.KeyboardControlMixin,
-  _placeholderBinding: 'parentView.placeholder'
-  _valueBinding: 'parentView.value'
-
   ###
     Displays placeholder text until this input or the parent view have a value
     to display.
@@ -1594,8 +1591,8 @@ Emberella.TagItemInput = Emberella.FlexibleTextField.extend Emberella.FocusableM
     @type String
   ###
   placeholder: Ember.computed ->
-    if get(@, '_placeholder') then '' else get(@, '_value')
-  .property '_placeholder', '_value'
+    if get(@, 'parentView.value') then '' else get(@, 'parentView.placeholder')
+  .property 'parentView.placeholder', 'parentView.value'
 
   ###
     Handle paste events.
