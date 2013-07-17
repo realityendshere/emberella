@@ -633,8 +633,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     @chainable
   ###
   focus: (e, beginning = false) ->
-    inputView = get @, 'inputView'
-    return @ unless inputView? and get(inputView, 'state') is 'inDOM'
+    return @ unless (inputView = get(@, 'inputView'))? and get(inputView, 'state') is 'inDOM'
     element = get(inputView, 'element')
     element?.focus()
     selection = if beginning then 0 else get(inputView, 'value.length')
@@ -649,7 +648,8 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     @chainable
   ###
   reset: ->
-    set @, 'inputView.value', ''
+    return @ unless (inputView = get(@, 'inputView'))?
+    set inputView, 'value', ''
     @
 
   ###
@@ -660,8 +660,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     @return Boolean
   ###
   isSelectionAtStart: ->
-    inputView = get @, 'inputView'
-    return @ unless inputView? and get(inputView, 'state') is 'inDOM'
+    return @ unless (inputView = get(@, 'inputView'))? and get(inputView, 'state') is 'inDOM'
     element = get(inputView, 'element')
     !!(element.selectionStart is 0 and element.selectionEnd is 0)
 
@@ -673,8 +672,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     @return Boolean
   ###
   isSelectionAtEnd: ->
-    inputView = get @, 'inputView'
-    return @ unless inputView? and get(inputView, 'state') is 'inDOM'
+    return @ unless (inputView = get(@, 'inputView'))? and get(inputView, 'state') is 'inDOM'
     element = get(inputView, 'element')
     len = get(inputView, 'value.length')
     !!(element.selectionStart is len and element.selectionEnd is len)
@@ -1055,7 +1053,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     @method _updateChildViews
   ###
   _updateChildViews: ->
-    return if get(@, 'isDestroyed')
+    return if get(@, 'isDestroyed') or get(@, 'isDestroying')
     @_removeInputView()
 
     childViews = @
@@ -1585,6 +1583,9 @@ Emberella.TagItemView = Ember.View.extend Ember.StyleBindingsMixin, Emberella.Fo
   @extends Emberella.FlexibleTextField
 ###
 Emberella.TagItemInput = Emberella.FlexibleTextField.extend Emberella.FocusableMixin, Emberella.KeyboardControlMixin,
+  _placeholderBinding: 'parentView.placeholder'
+  _valueBinding: 'parentView.value'
+
   ###
     Displays placeholder text until this input or the parent view have a value
     to display.
@@ -1593,8 +1594,8 @@ Emberella.TagItemInput = Emberella.FlexibleTextField.extend Emberella.FocusableM
     @type String
   ###
   placeholder: Ember.computed ->
-    if get(@, 'parentView.value') then '' else get(@, 'parentView.placeholder')
-  .property 'parentView.placeholder', 'parentView.value'
+    if get(@, '_placeholder') then '' else get(@, '_value')
+  .property '_placeholder', '_value'
 
   ###
     Handle paste events.
