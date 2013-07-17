@@ -483,9 +483,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     @return Ember.View
   ###
   getItemViewClass: ->
-    itemViewClass = get @, 'itemViewClass'
-    itemViewClass = get(itemViewClass) if typeof itemViewClass is 'string'
-    itemViewClass
+    @_getViewClass 'itemViewClass'
 
   ###
     Convenience method for obtaining the view class for text input.
@@ -494,9 +492,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     @return Ember.View
   ###
   getInputViewClass: ->
-    inputViewClass = get @, 'inputViewClass'
-    inputViewClass = get(inputViewClass) if typeof inputViewClass is 'string'
-    inputViewClass
+    @_getViewClass 'inputViewClass'
 
   ###
     Check if the provided view is an instance of the item view class.
@@ -897,6 +893,19 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   _delimiterDidChange: Ember.observer ->
     @addTags @_contentToValues()
   , 'delimiter'
+
+  ###
+    @private
+
+    Attempts to retrieve a view class from a given property name.
+
+    @method _getViewClass
+    @return Ember.View
+  ###
+  _getViewClass: (property) ->
+    viewClass = get(@, property)
+    viewClass = get(viewClass) if typeOf(viewClass) is 'string'
+    viewClass
 
   ###
     @private
