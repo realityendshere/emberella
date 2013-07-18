@@ -8,6 +8,7 @@
 #= require ./mixins/droppable_mixin
 #= require ./mixins/focusable_mixin
 #= require ./mixins/keyboard_control_mixin
+#= require ./mixins/membership_mixin
 #= require ./mixins/mq_mixin
 #= require ./mixins/remote_query_bindings
 #= require ./mixins/resize_handler

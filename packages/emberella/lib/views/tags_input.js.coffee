@@ -1,6 +1,7 @@
 #= require ../mixins/style_bindings
 #= require ../mixins/focusable_mixin
 #= require ../mixins/keyboard_control_mixin
+#= require ../mixins/membership_mixin
 #= require ./flexible_text_field
 
 Emberella = window.Emberella
@@ -29,6 +30,9 @@ ESCAPE_REPLACEMENT = '\\$&'
   @class TagsInput
   @namespace Emberella
   @extends Ember.ContainerView
+  @uses Ember.StyleBindingsMixin
+  @uses Emberella.FocusableMixin
+  @uses Emberella.KeyboardControlMixin
 ###
 Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Emberella.FocusableMixin, Emberella.KeyboardControlMixin,
   # private bookkeeping properties
@@ -1254,9 +1258,14 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   @class TagItemView
   @namespace Emberella
   @extends Ember.View
+  @uses Ember.StyleBindingsMixin
+  @uses Emberella.FocusableMixin
+  @uses Emberella.KeyboardControlMixin
 ###
 
-Emberella.TagItemView = Ember.View.extend Ember.StyleBindingsMixin, Emberella.FocusableMixin, Emberella.KeyboardControlMixin,
+Emberella.TagItemView = Ember.View.extend Ember.StyleBindingsMixin, Emberella.FocusableMixin, Emberella.KeyboardControlMixin, Emberella.MembershipMixin,
+  inherit: ['template', 'contentPath', 'deleteCharacter', 'deleteTitle', 'highlighter']
+
   ###
     The type of element to render this view into. By default, tag items will
     appear in `<span/>` elements.
@@ -1324,64 +1333,6 @@ Emberella.TagItemView = Ember.View.extend Ember.StyleBindingsMixin, Emberella.Fo
   index: null
 
   ###
-    The "get path" to follow to find content to display in the DOM.
-
-    For example, if the content is {id: 1, label: 'Ember'} and the
-    `contentPath` is "label", then the tag listing would appear with the word
-    'Ember' in the browser (i.e. the value of Ember.get(content, 'label')).
-
-    Inherited from parent view.
-
-    @property contentPath
-    @type String
-    @default ''
-  ###
-  contentPathBinding: 'parentView.contentPath'
-
-  ###
-    A string to display as the 'delete' button in the default tag listing
-    template.
-
-    Inherited from parent view.
-
-    @property deleteCharacter
-    @type String
-    @default 'x'
-  ###
-  deleteCharacterBinding: 'parentView.deleteCharacter'
-
-  ###
-    A string to display as the "title" attribute of the "delete" button in the
-    default tag listing template.
-
-    Inherited from parent view.
-
-    @property deleteTitle
-    @type String
-    @default 'Remove tag'
-  ###
-  deleteTitleBinding: 'parentView.deleteTitle'
-
-  ###
-    A collection of fuctions to use for applying special classes to this tag
-    listing.
-
-    Inherited from parent view.
-
-    @property highlighter
-    @type Object
-    @default null
-  ###
-  highlighterBinding: 'parentView.highlighter'
-
-  ###
-    Inherited from parent view.
-
-    @property template
-  ###
-  templateBinding: 'parentView.template'
-
-  ###
     Computes the string to display in the DOM based on the listing's content
     and contentPath.
 
@@ -1423,20 +1374,6 @@ Emberella.TagItemView = Ember.View.extend Ember.StyleBindingsMixin, Emberella.Fo
   .property 'content'
 
   ###
-    Set display style to 'none' when content is empty.
-
-    @method sendToParent
-    @param String message The method to call on the parent view
-    @param Mixed arg/args... Arguments to send to the method on the parent view
-    @chainable
-  ###
-  sendToParent: (message, arg = @, args...) ->
-    return @ unless (parentView = get(@, 'parentView'))
-    args = [arg].concat(args)
-    parentView[message].apply(parentView, args) if typeOf(parentView[message]) is 'function'
-    @
-
-  ###
     Remove this listing's content from the parent view's content array.
 
     Subsequently, this listing will be removed from the DOM or recycled with
@@ -1446,7 +1383,7 @@ Emberella.TagItemView = Ember.View.extend Ember.StyleBindingsMixin, Emberella.Fo
     @chainable
   ###
   removeSelf: ->
-    @sendToParent('removeTag', get(@, 'content'))
+    @dispatch('removeTag', get(@, 'content'))
 
   ###
     Respond to the backspace key.
@@ -1461,7 +1398,7 @@ Emberella.TagItemView = Ember.View.extend Ember.StyleBindingsMixin, Emberella.Fo
   ###
   backspacePressed: (e, alt, ctrl, meta, shift) ->
     return if alt or ctrl or meta or shift
-    @sendToParent 'cursorAfter'
+    @dispatch 'cursorAfter'
     @removeSelf()
 
   ###
@@ -1490,7 +1427,7 @@ Emberella.TagItemView = Ember.View.extend Ember.StyleBindingsMixin, Emberella.Fo
   ###
   rightArrowPressed: (e, alt, ctrl, meta, shift) ->
     return if alt or ctrl or meta
-    @sendToParent(if shift then 'focusAfter' else 'cursorAfter')
+    @dispatch(if shift then 'focusAfter' else 'cursorAfter')
 
   ###
     Respond to the left arrow key.
@@ -1505,7 +1442,7 @@ Emberella.TagItemView = Ember.View.extend Ember.StyleBindingsMixin, Emberella.Fo
   ###
   leftArrowPressed: (e, alt, ctrl, meta, shift) ->
     return if alt or ctrl or meta
-    if shift then @sendToParent('focusBefore') else @sendToParent('moveCursor', @, 0)
+    if shift then @dispatch('focusBefore') else @dispatch('moveCursor', @, 0)
 
   ###
     Respond to the up arrow key.
@@ -1519,7 +1456,7 @@ Emberella.TagItemView = Ember.View.extend Ember.StyleBindingsMixin, Emberella.Fo
     @chainable
   ###
   upArrowPressed: (e, alt, ctrl, meta, shift) ->
-    @sendToParent('upArrowPressed', e, alt, ctrl, meta, shift)
+    @dispatch('upArrowPressed', e, alt, ctrl, meta, shift)
 
   ###
     Respond to the down arrow key.
@@ -1533,7 +1470,7 @@ Emberella.TagItemView = Ember.View.extend Ember.StyleBindingsMixin, Emberella.Fo
     @chainable
   ###
   downArrowPressed: (e, alt, ctrl, meta, shift) ->
-    @sendToParent('downArrowPressed', e, alt, ctrl, meta, shift)
+    @dispatch('downArrowPressed', e, alt, ctrl, meta, shift)
 
   ###
     Respond to the enter/return key.
@@ -1590,6 +1527,8 @@ Emberella.TagItemView = Ember.View.extend Ember.StyleBindingsMixin, Emberella.Fo
   @class TagItemInput
   @namespace Emberella
   @extends Emberella.FlexibleTextField
+  @uses Emberella.FocusableMixin
+  @uses Emberella.KeyboardControlMixin
 ###
 Emberella.TagItemInput = Emberella.FlexibleTextField.extend Emberella.FocusableMixin, Emberella.KeyboardControlMixin,
   ###
