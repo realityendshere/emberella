@@ -194,6 +194,15 @@ Emberella.FlexibleTextField = Ember.TextField.extend Ember.StyleBindingsMixin, E
     null
 
   ###
+    Adjust width after entry into the DOM.
+
+    @event didInsertElement
+  ###
+  didInsertElement: ->
+    @_super()
+    @adjustWidth()
+
+  ###
     Handle imminent destruction.
 
     @event willDestroyElement
