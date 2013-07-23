@@ -24,6 +24,9 @@ ESCAPE_REPLACEMENT = '\\$&'
   complex objects. Thus this tags input view may be used to display an array of
   words or establish complex relationships between objects through text entry.
 
+  To work with this input control, bind the `content` property to data
+  represented as an array of strings or objects.
+
   With styling, the `Emberella.TagsInput` can nearly mimic the experience of
   entering email addresses in the "To:" field of Mac OS X Mail.
 
@@ -36,8 +39,18 @@ ESCAPE_REPLACEMENT = '\\$&'
 ###
 Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Emberella.FocusableMixin, Emberella.KeyboardControlMixin,
   # private bookkeeping properties
-  _value: null
-  _cursor: null
+  _value: ''
+  _cursor: 0
+
+  init: ->
+    ret = @_super()
+    value = get(@, 'value') ? ''
+    set(@, 'content', get(@, 'content') ? Ember.A())
+    set(@, '_value', value)
+    @capture value
+    @_setupContent()
+    @_renderList()
+    ret
 
   ###
     Declares this view is a tags input view.
@@ -105,6 +118,24 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   content: null
 
   ###
+    A string representation of the input's `content`. If this view manages an
+    array of strings (e.g. `['Ember', 'Javascript', 'Frontend', 'Code']`), then
+    the value property can be seeded with a string value and will be updated
+    as strings are added to and removed from the `content` array.
+
+    If a tag instance expects to manage objects, the value will not be
+    automatically updated as the content changes.
+
+    In any case, updating the `value` will not cause any automatic updates to
+    the `content` array.
+
+    @property value
+    @type String
+    @default ''
+  ###
+  value: ''
+
+  ###
     A delimiter to use when splitting or assembling tag values. This property
     can be set to a string or an array of strings and regular expressions.
 
@@ -165,7 +196,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   height: 'auto'
 
   ###
-    A placeholder to display when the input has no value.
+    A placeholder to display when the input has no content.
 
     @property placeholder
     @type String
@@ -210,6 +241,9 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     structured like `{id: 1, label: 'Ember'}` and the `contentPath` is "label",
     then the tag listing for the sample item would appear with the word 'Ember'
     in the browser (i.e. the value of Ember.get(content, 'label')).
+
+    If the `contentPath` is an empty string, the `content` property is expected
+    to contain an array of strings.
 
     @property contentPath
     @type String
@@ -260,10 +294,12 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   ].join(' ')
 
   ###
-    Tag inputs contain both a `value` and a `content` property. The `value`
-    property is a string representation of the tag array. The primary delimiter
-    is the first string or number in the `delimiter` property. If none of the
-    delimiters is a string or number, a plain comma (',') will be used instead.
+    The primary delimiter is the first string or number in the `delimiter`
+    property. If none of the delimiters is a string or number, a plain comma
+    (',') will be used instead.
+
+    The `_primary_delimiter` is used when converting an array of strings to a
+    string value.
 
     @private
     @property _primary_delimiter
@@ -326,34 +362,6 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   .volatile().readOnly()
 
   ###
-    A formatted string representation of the value of this input view.
-
-    When set, the value is passed into the content array. When retrieved,
-    this computed property assembles the content array into a string with each
-    tag separated by the `_primary_delimiter`.
-
-    Useful for seeding tag values into the input from a template or converting
-    strings into tag arrays.
-
-    @property value
-    @type String
-  ###
-  value: Ember.computed (key, value) ->
-    delimiter = get(@, '_primary_delimiter')
-    contentPath = get(@, 'contentPath')
-
-    #getter
-    if arguments.length is 1
-      @_contentToValues()
-
-    #setter
-    else
-      @addTags(value) if get(@, '_value')?
-      set(@, '_value', value)
-      return @
-  .property('content.length', 'content').volatile()
-
-  ###
     The current cursor position (i.e. index of the input view among this tag
     input's child views).
 
@@ -377,91 +385,181 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
       set(@, '_cursor', value)
   .property('_cursor').volatile()
 
-  init: ->
-    ret = @_super()
-    set(@, 'content', get(@, 'content') ? Ember.A())
-    @addTags(get(@, '_value') ? '')
-    @_renderList()
-    ret
+  ###
+    Determine if the `content` for this input instance is expected to contain
+    an array of strings (not objects).
+
+    @method isStringContent
+    @return Boolean
+  ###
+  isStringContent: ->
+    get(@, 'contentPath') is ''
 
   ###
-    Determine if the provided tag value, a string, is already present in this
-    tag input view.
+    Determine if the provided string value is already represented as a tag in
+    this input view.
+
+    Exact matches will always return true. If no exact match is found, this
+    method will use the `isEqual()` method to search for tag content that is
+    equivalent to the provided value.
 
     @method contains
-    @param String value A tag value to search for
+    @param String value A string to search for
     @return Boolean
   ###
   contains: (value) ->
     content = get(@, 'content')
     return false unless content?
     return true if content.contains value
-    contentPath = get @, 'contentPath'
 
-    match = content.find((obj) ->
-      value is get(obj, contentPath)
+    match = content.find((obj) =>
+      # use overridable isEqual() method
+      @isEqual value, obj
     )
+
     !!(match)
 
   ###
-    Create a new tag from the provided string value. If the value is added
-    as a new tag, this method will return `true`. If no tags are created, then
-    this method will return `false`.
+    Compare two tag values (typically a string and an object) to
+    determine equivalency.
 
-    If the value appears to contain delimiter matches, the value will be
-    processed with the `addTags()` method. While this is a convenience, it is
-    slower. If a string may need to be split into multiple tags, use the
-    `addTags()` method instead.
+    For example, the string `"foo"` may be equivalent to the object
+    `{"label": "foo"}` when managing a list of tags.
+
+    Override with your own method to inject a custom comparison for strings
+    and tag objects.
+
+    @method isEqual
+    @param {String|Object} value The needle
+    @param Object tag An object from the content array
+    @return Boolean
+  ###
+  isEqual: (value, tag) ->
+    contentPath = get @, 'contentPath'
+    value = get(value, contentPath) || value
+    contentValue = get(tag, contentPath) || ''
+    (value.toLowerCase? and contentValue.toLowerCase? and value.toLowerCase() is contentValue.toLowerCase())
+
+  ###
+    Insert a single new tag value into the `content` array at a given index.
+    If no index is specified, the `cursor` position will be used instead.
+
+    Before a tag is allowed into the `content` array, the `willAddValue()`
+    method will be called. Tag addition will be aborted if `willAddValue()`
+    returns `false`.
+
+    After a tag is inserted into the `content`, the `didAddValue()` method
+    will be called. Override `didAddValue()` to inject custom logic for
+    handling newly created tags.
 
     @method addTag
-    @param String value A string to convert into a tag
-    @param Integer idx The position/index at which to insert the new tag
-    @return Boolean
+    @param {String|Object} value A value to insert into the content array
+    @param Integer idx The position/index at which to insert the new value
+    @chainable
   ###
   addTag: (value = '', idx = get(@, 'cursor')) ->
-    return false if @contains(value = jQuery.trim(value)) or value is ''
-    return @addTags(value) if get(@, '_delimiter_pattern').test(value)
+    type = typeOf(value)
+    method = '_' + ['prepare', type, 'tag'].join('-').camelize()
 
-    return false if @didAddValue(value, idx) is false
+    unless typeOf(@[method]) is 'function'
+      throw new TypeError("Attempting to add tag of an unsupported type " + type)
 
-    set(@, 'cursor', idx + 1)
-    true
+    unless (value = @[method](value)) is false or @willAddValue(value, idx) is false
+      @_insertContent(value, idx)
+      @didAddValue(value, idx)
+
+    @
 
   ###
-    Create new tags from the provided string value. If any tags are created
-    from the value this method will return `true`. If no tags are created, then
-    this method will return `false`.
+    Add an array of tags.
 
     @method addTags
-    @param String value A string to convert into tag(s)
-    @param Boolean retainFocus Refocus on input after adding tags
-    @return Boolean
+    @param Array values Array of tags to add
+    @chainable
   ###
-  addTags: (value, retainFocus = @_hasFocus()) ->
-    unless value
-      shouldReset = true
-      value = get(@, 'inputView.value')
-
-    @_splitStringByDelimiter(value, values = Ember.A())
-    captured = false
-
+  addTags: (values = Ember.A()) ->
     @beginPropertyChanges()
+    values.forEach((value) =>
+      @addTag(value)
+    )
+    @endPropertyChanges()
+    @
 
-    for v in values
-      captured = true if @addTag(v)
+  ###
+    Called during the input capture process to convert a user-provided string
+    value into an array of strings.
 
-    if captured
+    @method tagify
+    @param String value A string to process into tags
+    @return Array
+  ###
+  tagify: (value) ->
+    @_splitStringByDelimiter(value)
+
+  ###
+    Convert an array into a string joined by the primary delimiter.
+
+    @method stringify
+    @param Array arr An array to join into a string
+    @return String
+  ###
+  stringify: (arr = get(@, 'content')) ->
+    @_arrayToString arr
+
+  ###
+    Update the `value` property with the stringified `content` array.
+
+    @method updateValue
+    @chainable
+  ###
+  updateValue: ->
+    set(@, 'value', @stringify())
+    @
+
+  ###
+    Convert the provided string (or current input value) into an array of new
+    tags and add them to the `content`.
+
+    @method capture
+    @param String value A value to capture (default: `inputView.value`)
+    @param Boolean retainFocus The input should regain focus after render
+    @chainable
+  ###
+  capture: (value, retainFocus = @_hasFocus()) ->
+    inputValue = get(@, 'inputView.value')
+    value = inputValue unless typeOf(value) is 'string'
+
+    values = @tagify(value)
+    len = get(@, 'content.length')
+
+    @addTags(values)
+
+    if len isnt get(@, 'content.length')
       Ember.run.scheduleOnce('afterRender', @, ->
-        # only reset if the added value appears to match the input view's value
-        @reset() if shouldReset or (value is get(@, 'inputView.value'))
+        @reset() if value is inputValue
         @_focusOnInputView(retainFocus)
       )
 
-    @endPropertyChanges()
-    captured
+    @
 
   ###
-    Remove the provided value from the tag input's content.
+    Swap the provided string with the provided object in the `content` array.
+
+    User entry can only be captured as a string. Therefore, you may need to
+    use a given string to lookup or retrive an object. Once the desired object
+    is prepared or retrieved, then it can be transplanted into the `content`
+    array with `swap()`.
+
+    @method swap
+    @param String str A string to swap out
+    @param Object obj An object to put in its place
+    @chainable
+  ###
+  swap: (str, obj) ->
+    @_swap(str, obj, @_hasFocus())
+
+  ###
+    Remove the provided value from the tag input's `content`.
 
     @method removeTag
     @param {String|Object} value The value to remove
@@ -678,35 +776,27 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     !!(element.selectionStart is len and element.selectionEnd is len)
 
   ###
-    Inject a new tag into the content array.
+    A pre-insertion check for a newly added string.
 
-    If using a non-extended, unmodified version of tag input, do not call this
-    method directly. Use `addTags()` instead.
+    Override this method to add custom tag validation. If a string should not
+    be added, return `false`.
 
-    However, if you wish to add custom tag creation logic to your tag input,
-    override `didAddValue()` with a method that builds or retrieves the
-    desired tag format. Once you have an object worthy of being added to the
-    `content` property, call the `insertContent()` method.
-
-    @method insertContent
-    @param {String|Object} value A tag to insert
-    @param Integer idx The index at which to insert the new tag
-    @chainable
+    @method willAddValue
+    @param {String|Object} value A processed (delimiter split) value to add
+    @param Integer idx The index at which to insert the new value
   ###
-  insertContent: (value, idx) ->
-    get(@, 'content').insertAt idx, value
-    @
+  willAddValue: Ember.K
 
   ###
     Override this method to inject custom tag creation/retrieval logic into
     your tag input view. Once the tag is ready, add it to the listing by
-    calling `insertContent()`.
+    calling `swap(value, tag)` (where `tag` is the created/retrieved value).
 
     @method didAddValue
     @param {String|Object} value A processed (delimiter split) value to add
     @param Integer idx The index at which to insert the new value
   ###
-  didAddValue: Ember.aliasMethod 'insertContent'
+  didAddValue: Ember.K
 
   ###
     Override this method to inject custom behavior prior to a tag's removal.
@@ -726,6 +816,15 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     @param {String|Object} value A tag being removed
   ###
   didRemoveValue: Ember.K
+
+  ###
+    Adjust cursor value after entry into the DOM.
+
+    @event didInsertElement
+  ###
+  didInsertElement: ->
+    @_super()
+    set(@, 'cursor', get(@, 'childViews.length'))
 
   ###
     Respond to a click event on the view element. The tags input will try to
@@ -763,7 +862,8 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   enterPressed: (e, alt, ctrl, meta, shift) ->
     return if alt or ctrl or meta or shift
     e.preventDefault()
-    @addTags()
+    e.stopPropagation()
+    @capture()
 
   ###
     Respond to the backspace key while focus is on the input view.
@@ -778,6 +878,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   backspacePressed: (e, alt, ctrl, meta, shift) ->
     return if alt or ctrl or meta or shift or !@isSelectionAtStart() or !(inputView = get(@, 'inputView'))
     e.preventDefault()
+    e.stopPropagation()
     @focusBefore(inputView)
 
   ###
@@ -793,6 +894,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   deletePressed: (e, alt, ctrl, meta, shift) ->
     return if alt or ctrl or meta or shift or !@isSelectionAtEnd() or !(inputView = get(@, 'inputView'))
     e.preventDefault()
+    e.stopPropagation()
     @focusAfter(inputView)
 
   ###
@@ -808,7 +910,13 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   rightArrowPressed: (e, alt, ctrl, meta, shift) ->
     return if alt or ctrl or meta or !@isSelectionAtEnd() or !(inputView = get(@, 'inputView'))
     e.preventDefault()
-    if shift then @focusAfter(inputView) else (@addTags() || @cursorAfter(inputView))
+    e.stopPropagation()
+    if shift
+      @focusAfter(inputView)
+    else
+      len = get(@, 'content.length')
+      @capture()
+      @cursorAfter(inputView) if len is get(@, 'content.length')
 
   ###
     Respond to the left arrow key while focus is on the input view.
@@ -823,6 +931,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   leftArrowPressed: (e, alt, ctrl, meta, shift) ->
     return if alt or ctrl or meta or !@isSelectionAtStart() or !(inputView = get(@, 'inputView'))
     e.preventDefault()
+    e.stopPropagation()
     if shift then @focusBefore(inputView) else @cursorBefore(inputView)
 
   ###
@@ -838,6 +947,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   upArrowPressed: (e, alt, ctrl, meta, shift) ->
     return if alt or ctrl or meta or !(inputView = get(@, 'inputView')) or (get(inputView, 'value') isnt '')
     e.preventDefault()
+    e.stopPropagation()
     @cursorBefore(get(@, 'childViews.firstObject'))
 
   ###
@@ -853,6 +963,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   downArrowPressed: (e, alt, ctrl, meta, shift) ->
     return if alt or ctrl or meta or !(inputView = get(@, 'inputView')) or (get(inputView, 'value') isnt '')
     e.preventDefault()
+    e.stopPropagation()
     @cursorAfter(get(@, 'childViews.lastObject'))
 
   ###
@@ -871,7 +982,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     regexString = ['.+(', regexString, ')$'].join('')
     pattern = new RegExp(regexString, 'g')
 
-    @addTags() if delimiter.test(value) and (pattern.test(value) or inputView._didPaste)
+    @capture() if delimiter.test(value) and (pattern.test(value) or inputView._didPaste)
     inputView._didPaste = false
     @
   , 'inputView.value'
@@ -884,7 +995,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     @method _cursorDidChange
   ###
   _cursorDidChange: Ember.observer ->
-    @_updateChildViews()
+    if get(@, 'childViews.length') then @_updateCursorLocation() else @_updateChildViews()
   , 'cursor'
 
   ###
@@ -895,8 +1006,54 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     @method _delimiterDidChange
   ###
   _delimiterDidChange: Ember.observer ->
-    @addTags @_contentToValues()
+    # Update the content and value when the delimiter changes
+    # only if using strings as tags
+    return unless @isStringContent()
+    content = @_arrayToString(get(@, 'content'))
+    @_clearContent()
+    @capture content
+    @updateValue()
   , 'delimiter'
+
+  ###
+    @private
+
+    Inject a new tag into the content array.
+
+    @method _insertContent
+    @param {String|Object} value A tag to insert
+    @param Integer idx The index at which to insert the new tag
+    @chainable
+  ###
+  _insertContent: (value, idx) ->
+    get(@, 'content').insertAt idx, value
+    @
+
+  ###
+    @private
+
+    Swaps the provided string with the provided object. If silent, then
+    `content` is quietly swapped using `splice()` to update the array without
+    causing the child views to be re-rendered (potentially causing focus to
+    change), and the content of just a single tag listing is updated.
+
+    If the tag is no longer in the `content` array, then nothing will happen.
+
+    @method _swap
+    @chainable
+  ###
+  _swap: (str, obj, silent) ->
+    content = get(@, 'content')
+    idx = content.indexOf str
+    cursor = get @, 'cursor'
+    if idx >= 0
+      if silent
+        content.splice(idx, 1, obj)
+        itemView = get(@, 'childViews').objectAt(if cursor <= idx then idx + 1 else idx)
+        set(itemView, 'content', obj) if itemView? and get(itemView, 'content') is str
+      else
+        content.replace(idx, 1, [obj])
+    @
 
   ###
     @private
@@ -916,20 +1073,20 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
 
     Combines items in the `content` array to form a string value.
 
-    @method _contentToValues
+    @method _arrayToString
     @return String
   ###
-  _contentToValues: ->
-    content = get @, 'content'
+  _arrayToString: (arr = Ember.A()) ->
+    unless (Ember.Enumerable.detect(arr) || Ember.isArray(arr))
+      throw new TypeError("Must pass Ember.Enumerable to Emberella.TagsInput#_arrayToString")
+
     delimiter = get @, '_primary_delimiter'
     contentPath = get @, 'contentPath'
 
-    if Ember.isArray content
-      content = content.map((item) ->
+    if Ember.isArray arr
+      result = arr.map((item) ->
         if item? and (ret = get(item, contentPath)) then ret else item
-      ).compact()
-
-    return if (content and content.join) then content.join(delimiter) else get(@, '_value')
+      ).compact().join(delimiter)
 
   ###
     @private
@@ -956,7 +1113,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
       # fact, completely left the field.
       Ember.run.later @, ->
         return unless get(@, 'state') is 'inDOM' and !@_hasFocus()
-        @addTags() if get(@, 'tagOnFocusOut')
+        @capture() if get(@, 'tagOnFocusOut')
         set(@, 'cursor', get(@, 'childViews.length')) if get(@, 'inputView.value') is ''
       , 100
   , 'hasFocus'
@@ -1043,7 +1200,14 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   _removeInputView: ->
     inputView = get(@, 'inputView')
     inputView = if inputView and !get(inputView, 'isDestroyed') and !get(inputView, 'isDestroying') then inputView else @_createInputView()
-    inputView.removeFromParent()
+
+    # Weird jQuery DOM manipulation error in Webkit.
+    try
+      inputView.removeFromParent()
+    catch e
+
+    # inputView.removeFromParent()
+
     return
 
   ###
@@ -1066,7 +1230,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     @method _updateChildViews
   ###
   _updateChildViews: ->
-    return if get(@, 'isDestroyed') or get(@, 'isDestroying')
+    return if (get(@, 'state') isnt 'inDOM') or get(@, 'isDestroyed') or get(@, 'isDestroying')
     @_removeInputView()
 
     childViews = @
@@ -1091,6 +1255,17 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
 
     @_insertInputView()
     return
+
+  ###
+    @private
+
+    Moves the input view without redrawing all childViews.
+
+    @method _updateCursorLocation
+  ###
+  _updateCursorLocation: ->
+    @_removeInputView()
+    @_insertInputView()
 
   ###
     @private
@@ -1126,9 +1301,75 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
 
     result
 
+  ###
+    @private
+
+    Prepares (trims) a string to be a tag.
+
+    @method _prepareStringTag
+    @param String value The string to capture
+    @return {String|Boolean} Processed value or false
+  ###
+  _prepareStringTag: (value = '') ->
+    value = jQuery.trim(value)
+    return false if value is '' or @contains(value)
+
+    # If the value can be split further, do so and early return
+    if get(@, '_delimiter_pattern').test(value)
+      @capture(value)
+      return false
+
+    value
+
+  ###
+    @private
+
+    Validates an object for tag-worthiness.
+
+    @method _prepareObjectTag
+    @param Object value The object to capture
+    @return {Object|Boolean} Validated object or false
+  ###
+  _prepareObjectTag: (value) ->
+    unless value and @_isValidTagValue(value)
+      Ember.warn "Attempted to add an object without a value at " + get(@, 'contentPath')
+      return false
+
+    value
+
+  ###
+    @private
+
+    Routes an array of tags back to addTags for proper processing.
+
+    @method _prepareArrayTag
+    @param Array value The array to capture
+    @return Boolean
+  ###
+  _prepareArrayTag: (value) ->
+    @addTags value
+    false
+
+  ###
+    @private
+
+    Checks a tag to see if it contains a defined value at the `contentPath`.
+
+    @method _isValidTagValue
+    @param Mixed value The value to check
+    @return Boolean
+  ###
+  _isValidTagValue: (value) ->
+    return false unless value
+    contentPath = get @, 'contentPath'
+
+    !!(get(value, contentPath))
+
+
   ################################
   ### CONTENT ARRAY MANAGEMENT ###
   ################################
+
 
   ###
     Hook for responding to the content array being replaced with a new
@@ -1174,6 +1415,8 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   ###
   contentArrayDidChange: (array, idx, removedCount, addedCount) ->
     @_updateChildViews()
+    @incrementProperty('cursor', (addedCount - removedCount))
+    @updateValue() if @isStringContent()
     @
 
   ###
@@ -1247,6 +1490,11 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   _clearContent: ->
     content = get(@, 'content')
     content.clear() if content
+
+
+###############################################################################
+###############################################################################
+
 
 ###
   `Emberella.TagItemView` is designed to be a drop-in tag item listing view for
@@ -1343,7 +1591,7 @@ Emberella.TagItemView = Ember.View.extend Ember.StyleBindingsMixin, Emberella.Fo
   displayContent: Ember.computed ->
     return '' unless (content = get @, 'content')?
     contentPath = get @, 'contentPath'
-    get(content, contentPath) ? ''
+    get(content, contentPath) ? content
   .property('content', 'contentPath').readOnly()
 
   ###
@@ -1518,6 +1766,10 @@ Emberella.TagItemView = Ember.View.extend Ember.StyleBindingsMixin, Emberella.Fo
     @backspacePressed(e, false, e.ctrlKey, e.metaKey, false)
 
 
+###############################################################################
+###############################################################################
+
+
 ###
   `Emberella.TagItemInput` is a flexible text field that moves to the cursor
   position of its parent view. An extension of `Emberella.FlexibleTextField`,
@@ -1531,6 +1783,8 @@ Emberella.TagItemView = Ember.View.extend Ember.StyleBindingsMixin, Emberella.Fo
   @uses Emberella.KeyboardControlMixin
 ###
 Emberella.TagItemInput = Emberella.FlexibleTextField.extend Emberella.FocusableMixin, Emberella.KeyboardControlMixin,
+  isTagItemInput: true
+
   ###
     Displays placeholder text until this input or the parent view have a value
     to display.
@@ -1539,8 +1793,8 @@ Emberella.TagItemInput = Emberella.FlexibleTextField.extend Emberella.FocusableM
     @type String
   ###
   placeholder: Ember.computed ->
-    if get(@, 'parentView.value') then '' else get(@, 'parentView.placeholder')
-  .property 'parentView.placeholder', 'parentView.value'
+    if get(@, 'parentView.content.length') then '' else get(@, 'parentView.placeholder')
+  .property 'parentView.placeholder', 'parentView.content.length'
 
   ###
     Handle paste events.
