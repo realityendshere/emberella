@@ -386,14 +386,75 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   .property('_cursor').volatile()
 
   ###
-    Determine if the `content` for this input instance is expected to contain
-    an array of strings (not objects).
+    Insert a single new tag value into the `content` array at a given index.
+    If no index is specified, the `cursor` position will be used instead.
 
-    @method isStringContent
-    @return Boolean
+    Before a tag is allowed into the `content` array, the `willAddValue()`
+    method will be called. Tag addition will be aborted if `willAddValue()`
+    returns `false`.
+
+    After a tag is inserted into the `content`, the `didAddValue()` method
+    will be called. Override `didAddValue()` to inject custom logic for
+    handling newly created tags.
+
+    @method addTag
+    @param {String|Object} value A value to insert into the content array
+    @param Integer idx The position/index at which to insert the new value
+    @chainable
   ###
-  isStringContent: ->
-    get(@, 'contentPath') is ''
+  addTag: (value = '', idx = get(@, 'cursor')) ->
+    type = typeOf(value)
+    method = '_' + ['prepare', type, 'tag'].join('-').camelize()
+
+    unless typeOf(@[method]) is 'function'
+      throw new TypeError("Attempting to add tag of an unsupported type " + type)
+
+    unless (value = @[method](value)) is false or @willAddValue(value, idx) is false
+      @insertContent(value, idx)
+      @didAddValue(value, idx)
+
+    @
+
+  ###
+    Add an array of tags.
+
+    @method addTags
+    @param Array values Array of tags to add
+    @chainable
+  ###
+  addTags: (values = Ember.A()) ->
+    @beginPropertyChanges()
+    values.forEach((value) =>
+      @addTag(value)
+    )
+    @endPropertyChanges()
+    @
+
+  ###
+    Convert the provided string (or current input value) into an array of new
+    tags and add them to the `content`.
+
+    @method capture
+    @param String value A value to capture (default: `inputView.value`)
+    @param Boolean retainFocus The input should regain focus after render
+    @chainable
+  ###
+  capture: (value, retainFocus = @isFocused()) ->
+    inputValue = get(@, 'inputView.value')
+    value = inputValue unless typeOf(value) is 'string'
+
+    values = @tagify(value)
+    len = get(@, 'content.length')
+
+    @addTags(values)
+
+    if len isnt get(@, 'content.length')
+      Ember.run.schedule('afterRender', @, ->
+        @reset() if value is inputValue
+        @refocus(retainFocus)
+      )
+
+    @
 
   ###
     Determine if the provided string value is already represented as a tag in
@@ -441,180 +502,44 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     (value.toLowerCase? and contentValue.toLowerCase? and value.toLowerCase() is contentValue.toLowerCase())
 
   ###
-    Insert a single new tag value into the `content` array at a given index.
-    If no index is specified, the `cursor` position will be used instead.
+    Place the input view before the specified view instance.
 
-    Before a tag is allowed into the `content` array, the `willAddValue()`
-    method will be called. Tag addition will be aborted if `willAddValue()`
-    returns `false`.
-
-    After a tag is inserted into the `content`, the `didAddValue()` method
-    will be called. Override `didAddValue()` to inject custom logic for
-    handling newly created tags.
-
-    @method addTag
-    @param {String|Object} value A value to insert into the content array
-    @param Integer idx The position/index at which to insert the new value
+    @method cursorBefore
+    @param Ember.View view The child view to place the cursor before
     @chainable
   ###
-  addTag: (value = '', idx = get(@, 'cursor')) ->
-    type = typeOf(value)
-    method = '_' + ['prepare', type, 'tag'].join('-').camelize()
+  cursorBefore: (view) ->
+    @moveCursor view, -1
 
-    unless typeOf(@[method]) is 'function'
-      throw new TypeError("Attempting to add tag of an unsupported type " + type)
+  ###
+    Place the input view after the specified view instance.
 
-    unless (value = @[method](value)) is false or @willAddValue(value, idx) is false
-      @_insertContent(value, idx)
-      @didAddValue(value, idx)
+    @method cursorAfter
+    @param Ember.View view The child view to place the cursor after
+    @chainable
+  ###
+  cursorAfter: (view) ->
+    @moveCursor view
 
+  ###
+    Place the input view some distance after the specified view instance.
+
+    Use a negative number to move the input to a lower index.
+
+    @method moveCursor
+    @param Ember.View view The child view to move the cursor from
+    @param Integer shift How far to move focus
+    @chainable
+  ###
+  moveCursor: (view, shift = 1) ->
+    return @ unless view?
+    cursor = get(@, 'cursor')
+    childViews = get(@, 'childViews')
+    idx = childViews.indexOf view
+    shift = shift - 1 if idx > cursor
+    set(@, 'cursor', idx + shift)
+    @refocus(true, (shift < 0))
     @
-
-  ###
-    Add an array of tags.
-
-    @method addTags
-    @param Array values Array of tags to add
-    @chainable
-  ###
-  addTags: (values = Ember.A()) ->
-    @beginPropertyChanges()
-    values.forEach((value) =>
-      @addTag(value)
-    )
-    @endPropertyChanges()
-    @
-
-  ###
-    Called during the input capture process to convert a user-provided string
-    value into an array of strings.
-
-    @method tagify
-    @param String value A string to process into tags
-    @return Array
-  ###
-  tagify: (value) ->
-    @_splitStringByDelimiter(value)
-
-  ###
-    Convert an array into a string joined by the primary delimiter.
-
-    @method stringify
-    @param Array arr An array to join into a string
-    @return String
-  ###
-  stringify: (arr = get(@, 'content')) ->
-    @_arrayToString arr
-
-  ###
-    Update the `value` property with the stringified `content` array.
-
-    @method updateValue
-    @chainable
-  ###
-  updateValue: ->
-    set(@, 'value', @stringify())
-    @
-
-  ###
-    Convert the provided string (or current input value) into an array of new
-    tags and add them to the `content`.
-
-    @method capture
-    @param String value A value to capture (default: `inputView.value`)
-    @param Boolean retainFocus The input should regain focus after render
-    @chainable
-  ###
-  capture: (value, retainFocus = @_hasFocus()) ->
-    inputValue = get(@, 'inputView.value')
-    value = inputValue unless typeOf(value) is 'string'
-
-    values = @tagify(value)
-    len = get(@, 'content.length')
-
-    @addTags(values)
-
-    if len isnt get(@, 'content.length')
-      Ember.run.scheduleOnce('afterRender', @, ->
-        @reset() if value is inputValue
-        @_focusOnInputView(retainFocus)
-      )
-
-    @
-
-  ###
-    Swap the provided string with the provided object in the `content` array.
-
-    User entry can only be captured as a string. Therefore, you may need to
-    use a given string to lookup or retrive an object. Once the desired object
-    is prepared or retrieved, then it can be transplanted into the `content`
-    array with `swap()`.
-
-    @method swap
-    @param String str A string to swap out
-    @param Object obj An object to put in its place
-    @chainable
-  ###
-  swap: (str, obj) ->
-    @_swap(str, obj, @_hasFocus())
-
-  ###
-    Remove the provided value from the tag input's `content`.
-
-    @method removeTag
-    @param {String|Object} value The value to remove
-    @chainable
-  ###
-  removeTag: (value) ->
-    return @ unless value?
-
-    content = get(@, 'content')
-    idx = content.indexOf value
-
-    return @ if idx < 0 or @willRemoveValue(value) is false
-
-    content.removeObject value
-    set(@, 'cursor', idx)
-    @didRemoveValue value
-    @
-
-  ###
-    Convenience method for obtaining the view class for tag listings.
-
-    @method getItemViewClass
-    @return Ember.View
-  ###
-  getItemViewClass: ->
-    @_getViewClass 'itemViewClass'
-
-  ###
-    Convenience method for obtaining the view class for text input.
-
-    @method getInputViewClass
-    @return Ember.View
-  ###
-  getInputViewClass: ->
-    @_getViewClass 'inputViewClass'
-
-  ###
-    Check if the provided view is an instance of the item view class.
-
-    @method isItemView
-    @param Mixed view A value to check
-    @return Boolean
-  ###
-  isItemView: (view) ->
-    !!(view instanceof @getItemViewClass())
-
-  ###
-    Check if the provided view is an instance of the input view class.
-
-    @method isInputView
-    @param Mixed view A value to check
-    @return Boolean
-  ###
-  isInputView: (view) ->
-    !!(view instanceof @getInputViewClass())
 
   ###
     Move document focus to the child view at the provided index.
@@ -683,46 +608,6 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     @
 
   ###
-    Place the input view before the specified view instance.
-
-    @method cursorBefore
-    @param Ember.View view The child view to place the cursor before
-    @chainable
-  ###
-  cursorBefore: (view) ->
-    @moveCursor view, -1
-
-  ###
-    Place the input view after the specified view instance.
-
-    @method cursorAfter
-    @param Ember.View view The child view to place the cursor after
-    @chainable
-  ###
-  cursorAfter: (view) ->
-    @moveCursor view
-
-  ###
-    Place the input view some distance after the specified view instance.
-
-    Use a negative number to move the input to a lower index.
-
-    @method moveCursor
-    @param Ember.View view The child view to move the cursor from
-    @param Integer shift How far to move focus
-    @chainable
-  ###
-  moveCursor: (view, shift = 1) ->
-    return @ unless view?
-    cursor = get(@, 'cursor')
-    childViews = get(@, 'childViews')
-    idx = childViews.indexOf view
-    shift = shift - 1 if idx > cursor
-    set(@, 'cursor', idx + shift)
-    @_focusOnInputView(true, (shift < 0))
-    @
-
-  ###
     Focus on input view and place selection in the expected position.
 
     @method focus
@@ -740,15 +625,66 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     @
 
   ###
-    Empty the value of the input view.
+    Convenience method for obtaining the view class for text input.
 
-    @method reset
+    @method getInputViewClass
+    @return Ember.View
+  ###
+  getInputViewClass: ->
+    @_getViewClass 'inputViewClass'
+
+  ###
+    Convenience method for obtaining the view class for tag listings.
+
+    @method getItemViewClass
+    @return Ember.View
+  ###
+  getItemViewClass: ->
+    @_getViewClass 'itemViewClass'
+
+  ###
+    Determine if the tags input view or any of its child views have focus.
+
+    @method isFocused
+    @return Boolean
+  ###
+  isFocused: ->
+    focused = @find((childView) ->
+      get(childView, 'hasFocus')
+    )
+    return !!(focused)
+
+  ###
+    Inject a new tag into the content array.
+
+    @method insertContent
+    @param {String|Object} value A tag to insert
+    @param Integer idx The index at which to insert the new tag
     @chainable
   ###
-  reset: ->
-    return @ unless (inputView = get(@, 'inputView'))?
-    set inputView, 'value', ''
+  insertContent: (value, idx) ->
+    get(@, 'content').insertAt idx, value
     @
+
+  ###
+    Check if the provided view is an instance of the input view class.
+
+    @method isInputView
+    @param Mixed view A value to check
+    @return Boolean
+  ###
+  isInputView: (view) ->
+    !!(view instanceof @getInputViewClass())
+
+  ###
+    Check if the provided view is an instance of the item view class.
+
+    @method isItemView
+    @param Mixed view A value to check
+    @return Boolean
+  ###
+  isItemView: (view) ->
+    !!(view instanceof @getItemViewClass())
 
   ###
     Determine if the text field's selection cursor is positioned entirely
@@ -774,6 +710,114 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     element = get(inputView, 'element')
     len = get(inputView, 'value.length')
     !!(element.selectionStart is len and element.selectionEnd is len)
+
+  ###
+    Determine if the `content` for this input instance is expected to contain
+    an array of strings (not objects).
+
+    @method isStringContent
+    @return Boolean
+  ###
+  isStringContent: ->
+    get(@, 'contentPath') is ''
+
+  ###
+    Place focus on the input view when it's ready.
+
+    @method refocus
+    @param Boolean force Send `true` to ensure focus moves to the input view
+    @param Boolean beginning Move selection to the start of the input value
+  ###
+  refocus: (force, beginning) ->
+    inputView = get(@, 'inputView')
+
+    return unless force or @isFocused()
+
+    if get(inputView, 'state') is 'inDOM'
+      @focus({}, beginning)
+    else
+      Ember.run.schedule 'afterRender', @, ->
+        @focus({}, beginning) if force or @isFocused()
+
+    return
+
+  ###
+    Remove the provided value from the tag input's `content`.
+
+    @method removeTag
+    @param {String|Object} value The value to remove
+    @chainable
+  ###
+  removeTag: (value) ->
+    return @ unless value?
+
+    content = get(@, 'content')
+    idx = content.indexOf value
+
+    return @ if idx < 0 or @willRemoveValue(value) is false
+
+    content.removeObject value
+    set(@, 'cursor', idx)
+    @didRemoveValue value
+    @
+
+  ###
+    Empty the value of the input view.
+
+    @method reset
+    @chainable
+  ###
+  reset: ->
+    return @ unless (inputView = get(@, 'inputView'))?
+    set inputView, 'value', ''
+    @
+
+  ###
+    Convert an array into a string joined by the primary delimiter.
+
+    @method stringify
+    @param Array arr An array to join into a string
+    @return String
+  ###
+  stringify: (arr = get(@, 'content')) ->
+    @_arrayToString arr
+
+  ###
+    Swap the provided string with the provided object in the `content` array.
+
+    User entry can only be captured as a string. Therefore, you may need to
+    use a given string to lookup or retrive an object. Once the desired object
+    is prepared or retrieved, then it can be transplanted into the `content`
+    array with `swap()`.
+
+    @method swap
+    @param String str A string to swap out
+    @param Object obj An object to put in its place
+    @chainable
+  ###
+  swap: (str, obj) ->
+    @_swap(str, obj, @isFocused())
+
+  ###
+    Called during the input capture process to convert a user-provided string
+    value into an array of strings.
+
+    @method tagify
+    @param String value A string to process into tags
+    @return Array
+  ###
+  tagify: (value) ->
+    @_splitStringByDelimiter(value)
+
+  ###
+    Update the `value` property with the stringified `content` array.
+
+    @method updateValue
+    @chainable
+  ###
+  updateValue: ->
+    set(@, 'value', @stringify())
+    @
 
   ###
     A pre-insertion check for a newly added string.
@@ -847,7 +891,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     idx = @indexOf(nearest)
     idx = idx - 1 if idx > get(@, 'cursor')
     set(@, 'cursor', if nearest then idx else get(@, 'content.length'))
-    @_focusOnInputView(true)
+    @refocus(true)
 
   ###
     Respond to the enter/return key while focus is on the input view.
@@ -1018,20 +1062,6 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   ###
     @private
 
-    Inject a new tag into the content array.
-
-    @method _insertContent
-    @param {String|Object} value A tag to insert
-    @param Integer idx The index at which to insert the new tag
-    @chainable
-  ###
-  _insertContent: (value, idx) ->
-    get(@, 'content').insertAt idx, value
-    @
-
-  ###
-    @private
-
     Swaps the provided string with the provided object. If silent, then
     `content` is quietly swapped using `splice()` to update the array without
     causing the child views to be re-rendered (potentially causing focus to
@@ -1096,7 +1126,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     @method _focusDidChange
   ###
   _focusDidChange: Ember.observer ->
-    set @, 'hasFocus', @_hasFocus()
+    set @, 'hasFocus', @isFocused()
   , '@each.hasFocus'
 
   ###
@@ -1104,15 +1134,15 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
 
     Perform actions when focus entirely exits the tags input view.
 
-    @method _hasFocusDidChange
+    @method hasFocusDidChange
   ###
-  _hasFocusDidChange: Ember.observer ->
+  hasFocusDidChange: Ember.observer ->
     if !get(@, 'hasFocus')
       # The field may appear to lose focus frequently as the focus shifts
       # between child views. The run later helps to verify the focus has, in
       # fact, completely left the field.
       Ember.run.later @, ->
-        return unless get(@, 'state') is 'inDOM' and !@_hasFocus()
+        return unless get(@, 'state') is 'inDOM' and !@isFocused()
         @capture() if get(@, 'tagOnFocusOut')
         set(@, 'cursor', get(@, 'childViews.length')) if get(@, 'inputView.value') is ''
       , 100
@@ -1126,8 +1156,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     @method _renderList
   ###
   _renderList: ->
-    Ember.run.schedule 'afterRender', @, ->
-      @_updateChildViews()
+    @_updateChildViews()
 
   ###
     @private
@@ -1139,42 +1168,6 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   _rerenderList: ->
     @destroyAllChildren()
     @_renderList()
-
-  ###
-    @private
-
-    Determine if the tags input view or any of its child views have focus.
-
-    @method _hasFocus
-    @return Boolean
-  ###
-  _hasFocus: ->
-    focused = @find((childView) ->
-      get(childView, 'hasFocus')
-    )
-    return !!(focused)
-
-  ###
-    @private
-
-    Place focus on the input view when it's ready.
-
-    @method _focusOnInputView
-    @param Boolean force Send `true` to ensure focus moves to the input view
-    @param Boolean beginning Move selection to the start of the input value
-  ###
-  _focusOnInputView: (force, beginning) ->
-    inputView = get(@, 'inputView')
-
-    return unless force or @_hasFocus()
-
-    if get(inputView, 'state') is 'inDOM'
-      @focus({}, beginning)
-    else
-      Ember.run.schedule 'afterRender', @, ->
-        @focus({}, beginning) if force or @_hasFocus()
-
-    return
 
   ###
     @private
@@ -1415,7 +1408,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   ###
   contentArrayDidChange: (array, idx, removedCount, addedCount) ->
     @_updateChildViews()
-    @incrementProperty('cursor', (addedCount - removedCount))
+    @incrementProperty('cursor', ((addedCount || 0) - (removedCount || 0)))
     @updateValue() if @isStringContent()
     @
 
