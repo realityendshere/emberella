@@ -32,7 +32,7 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
 
   tabindex: -1
 
-  autoFocus: false
+  autoFocus: true
 
   items: 10
 
