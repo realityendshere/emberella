@@ -9,10 +9,6 @@ set = Ember.set
 Emberella.AutocompleteTagsView = Emberella.AutocompleteView.extend
   displayValueBinding: 'inputView.inputView.value'
 
-  # init: ->
-  #   root.ACT = @
-  #   @_super()
-
   value: ''
 
   content: null
