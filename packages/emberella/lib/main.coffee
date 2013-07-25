@@ -4,6 +4,7 @@
 #= require ./helpers/function_helpers
 #= require ./helpers/big_data_helpers
 
+#= require ./mixins/autocomplete_support
 #= require ./mixins/draggable_mixin
 #= require ./mixins/droppable_mixin
 #= require ./mixins/focusable_mixin
@@ -26,5 +27,7 @@
 #= require ./views/range_input
 #= require ./views/star_rating
 #= require ./views/tags_input
+#= require ./views/autocomplete
+#= require ./views/autocomplete_tags
 
 #= require ./controllers/sparse_array_controller
