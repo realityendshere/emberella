@@ -1134,9 +1134,9 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
 
     Perform actions when focus entirely exits the tags input view.
 
-    @method hasFocusDidChange
+    @method _hasFocusDidChange
   ###
-  hasFocusDidChange: Ember.observer ->
+  _hasFocusDidChange: Ember.observer ->
     if !get(@, 'hasFocus')
       # The field may appear to lose focus frequently as the focus shifts
       # between child views. The run later helps to verify the focus has, in
