@@ -143,7 +143,7 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
     searchPath = get(@, 'searchPath')
     searchPath = searchPath.split(/\s+/) if searchPath.split?
     ret = Ember.A([get(@, 'contentPath')])
-    ret.addObjects(searchPath) is Ember.isArray(searchPath)
+    ret.addObjects(searchPath) if Ember.isArray(searchPath)
     ret
   .property('contentPath', 'searchPath')
 
