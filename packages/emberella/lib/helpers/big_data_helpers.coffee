@@ -1,3 +1,21 @@
+###
+@module emberella
+###
+
+###
+  `Emberella.forEachAsync` iterates over a large array gradually. The function
+  will process items in the array for a given number of ms, stop iterating for
+  a given wait time, then proceed and wait until the iteration is complete.
+
+  This can be useful for iterating over a large array without locking the UX
+  in the browser.
+
+  TODO: Promises?
+
+  @method forEachAsync
+  @namespace Emberella
+###
+
 Emberella.forEachAsync = (context, objects, eachFn, completeFn, runTime = 200, wait = 200) ->
   if (!(Ember.Enumerable.detect(objects) || Ember.isArray(objects)))
     throw new TypeError("Must pass Ember.Enumerable to Emberella.forEachAsync");
