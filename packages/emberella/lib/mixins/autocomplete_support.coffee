@@ -9,7 +9,7 @@ set = Ember.set
 typeOf = Ember.typeOf
 guidFor = Ember.guidFor
 
-SEARCH_SUBSTITUTION = /%s/
+SEARCH_SUBSTITUTION = /%s/g
 
 ###
   `Emberella.AutocompleteSupport` provides a basic structure for fetching and
