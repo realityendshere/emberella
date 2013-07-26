@@ -75,10 +75,14 @@ Emberella.MQStateManager = Ember.StateManager.extend
       queue[privateFn].call queue, queueItem if typeOf(queue[privateFn]) is 'function'
       queue[message].call queue, queueItem if typeOf(queue[message]) is 'function'
 
+  unhandledEvent: (manager, eventName, e) ->
+    Ember.debug("MQ state manager did not handle an event :: " + eventName)
+    [manager, eventName, e]
+
   queued: Ember.State.create
     isQueueItemWaiting: true
 
-    enter: (manager) ->
+    setup: (manager) ->
       manager.invokeQueueCallback 'didAddQueueItem'
 
     activate: (manager) ->
@@ -93,7 +97,7 @@ Emberella.MQStateManager = Ember.StateManager.extend
   active: Ember.State.create
     isQueueItemInProgress: true
 
-    enter: (manager) ->
+    setup: (manager) ->
       manager.invokeQueueCallback 'didActivateQueueItem'
 
     finish: (manager) ->
@@ -105,7 +109,7 @@ Emberella.MQStateManager = Ember.StateManager.extend
   completed: Ember.State.create
     isQueueItemComplete: true
 
-    enter: (manager) ->
+    setup: (manager) ->
       manager.invokeQueueCallback 'didCompleteQueueItem'
 
     didError: Ember.K
@@ -113,7 +117,7 @@ Emberella.MQStateManager = Ember.StateManager.extend
   error: Ember.State.create
     isQueueItemError: true
 
-    enter: (manager) ->
+    setup: (manager) ->
       manager.invokeQueueCallback 'didQueueItemError'
 
     retry: (manager) ->
