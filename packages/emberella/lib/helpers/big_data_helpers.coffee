@@ -7,12 +7,25 @@
   will process items in the array for a given number of ms, stop iterating for
   a given wait time, then proceed and wait until the iteration is complete.
 
+  * iterate for `runTime` milliseconds
+  * if complete, call `completeFn`
+  * otherwise, standby for `wait` milliseconds (releases Javascript thread)
+  * iterate for `runTime` milliseconds
+  * if complete, call `completeFn`
+  * wash, rinse, repeat until array is fully processed...
+
   This can be useful for iterating over a large array without locking the UX
   in the browser.
 
   TODO: Promises?
 
   @method forEachAsync
+  @param Mixed context The context (what `this` will be)
+  @param Array objects The array to iterate over
+  @param Function eachFn The function to call during each iteration
+  @param Function completeFn A callback function
+  @param Integer runTime The number of ms to process array items
+  @param Integer wait The number of ms to wait between iteration sets
   @namespace Emberella
 ###
 
