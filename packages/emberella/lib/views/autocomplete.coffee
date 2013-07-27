@@ -561,15 +561,6 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
   ###
   complete: (value = get(@, 'selected'), retainFocus = @isFocused()) ->
     return @ unless value
-
-    # Keep the suggestions list hidden for once change to the _suggestions
-    # property to try to prevent the list from disappearing and reappearing
-    # moments later
-    hideList = ->
-      @hide()
-      @removeObserver('_suggestions', @, hideList)
-
-    @addObserver('_suggestions', @, hideList)
     get(@hide(), 'updater').call @, value
     @focus() if retainFocus
     @
@@ -882,17 +873,16 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
       set @, 'allSuggestions', suggestions
       return suggestions
 
-    if property is 'search'
-      @triggerAction(
-        action: 'searchForSuggestions'
-        target: get @, 'controller'
-        actionContext: @
-      )
-
     source = get(@, 'source') ? Ember.A()
-    source = get(source) if typeOf(source) is 'string' and source isnt ''
+    source = (get(source) if typeOf(source) is 'string' and source isnt '') || source
 
-    @_arraySearch(source) if Ember.isArray(source)
+    if property is 'search'
+      @_triggerRemote(source)
+
+    if Ember.isArray(source)
+      set(@, 'allSuggestions', @_arraySearch(source))
+
+    get @, 'allSuggestions'
   , 'search', 'matcher', 'minLength', 'source', 'source.length'
 
   ###
@@ -912,9 +902,30 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
       do (term) =>
         suggestions.push(term) if matcher.call(@, term)
 
-    set @, 'allSuggestions', suggestions
-
     suggestions
+
+  ###
+    @private
+
+    Trigger action on context.
+
+    @method _triggerRemote
+    @param Mixed source
+    @chainable
+  ###
+  _triggerRemote: (source) ->
+    context = get @, 'context'
+    action = 'searchForSuggestions'
+
+    # Trigger action only if the context will handle it
+    # or the source is a string (async/remote search)
+    if (typeOf(source) is 'string') or (context? and typeOf(context[action]) is 'function')
+      @triggerAction(
+        action: action
+        actionContext: @
+      )
+
+    @
 
   ###
     @private
