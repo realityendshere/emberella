@@ -868,7 +868,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   ###
   didInsertElement: ->
     @_super()
-    set(@, 'cursor', get(@, 'childViews.length'))
+    set(@, 'cursor', get(@, 'content.length'))
 
   ###
     Respond to a click event on the view element. The tags input will try to
