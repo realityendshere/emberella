@@ -506,7 +506,7 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
 
     #getter
     if arguments.length is 1
-      return (get(@, 'hasFocus') and get(@, key) and len > 0)
+      return !!(get(@, 'hasFocus') and get(@, key) and len > 0)
 
     #setter
     else
@@ -561,8 +561,9 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
   ###
   complete: (value = get(@, 'selected'), retainFocus = @isFocused()) ->
     return @ unless value
-    get(@hide(), 'updater').call @, value
+    get(@, 'updater').call @, value
     @focus() if retainFocus
+    @hide()
     @
 
   ###
@@ -704,7 +705,7 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
     @chainable
   ###
   show: ->
-    set @, 'isListVisible', true
+    set @, '_isListVisible', true
     @
 
   ###
@@ -714,7 +715,7 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
     @chainable
   ###
   hide: ->
-    set @, 'isListVisible', false
+    set @, '_isListVisible', false
     @
 
   ###
@@ -742,7 +743,6 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
     @method suggestionsDidChange
   ###
   suggestionsDidChange: Ember.observer ->
-    if get('suggestions.length') is 0 then @hide() else @show()
     set(@, 'selected', if get(@, 'autoSelect') then (get(@, 'suggestions.firstObject') ? null) else null)
   , 'suggestions', 'suggestions.length'
 
@@ -833,7 +833,7 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
     @method _displayValueDidChange
   ###
   _displayValueDidChange: Ember.observer ->
-    if get(@, 'displayValue.length') < get(@, 'minLength') then set(@, 'search', '') else get(@, 'debouncedValueDidChange')()
+    if get(@, 'displayValue.length') < get(@, 'minLength') then set(@hide(), 'search', '') else get(@show(), 'debouncedValueDidChange')()
   , 'displayValue', 'minLength'
 
   ###
@@ -988,7 +988,8 @@ Emberella.AutocompleteInputView = Ember.TextField.extend Emberella.FocusableMixi
   @uses Emberella.MembershipMixin
 ###
 Emberella.AutocompleteListView = Ember.CollectionView.extend Emberella.MembershipMixin,
-  inherit: ['itemViewClass', 'content:suggestions', 'isVisible:isListVisible']
+  isVisibleBinding: 'leadView.isListVisible'
+  inherit: ['itemViewClass', 'content:suggestions']
   classNames: ['emberella-autocomplete-list']
 
 
