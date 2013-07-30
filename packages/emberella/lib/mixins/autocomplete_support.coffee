@@ -104,10 +104,9 @@ Emberella.AutocompleteSupport = Ember.Mixin.create
     @param Array results The list of available suggestions
   ###
   provideSearchResults: (actionContext, search, url, results) ->
-    currentSearch = get(actionContext, 'search')
     results = if Ember.isArray(results) then results else [results]
     @setCacheResults(actionContext, url, results)
-    set(actionContext, 'allSuggestions', results) if search is currentSearch
+    actionContext.trigger('didRetrieveSuggestions', search, results)
     @
 
   ###
