@@ -25,6 +25,8 @@ QUERY_SUBSTITUTION = /%q/
 
   TODO: Allow more flexible positioning of the suggestions list when near the
         bottom edge of the window?
+  TODO: Code cleanup and refactor to allow autocomplete to integrate with
+        other views
 
   @class AutocompleteView
   @namespace Emberella
@@ -100,8 +102,7 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
     @property defaultSorter
     @final
   ###
-  defaultSorter: (suggestions) ->
-    search = get(@, 'search')
+  defaultSorter: (suggestions, search = get(@, 'search')) ->
     searchPaths = get(@, 'searchPaths')
     return Ember.A() unless search
     search = search.toLowerCase()
@@ -111,7 +112,7 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
     results = []
 
     for s, si in searches
-      s = @stringToSearchExpression(s)
+      s = @stringToSearchExpression(s, search)
       results[si] = results[si] || new Array(words.length)
 
       for term, ti in suggestions by -1
@@ -441,9 +442,7 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
     items = get @, 'items'
     displayValue = get(@, 'displayValue') || ''
     allSuggestions = get(@, 'allSuggestions').slice()
-    sorter = get @, 'sorter'
-    suggestions = sorter.call @, allSuggestions
-    _suggestions = suggestions.slice(0, items)
+    _suggestions = allSuggestions.slice(0, items)
 
     return _suggestions if _suggestions.length > 0 or !get(@,'showEmptyListing') or displayValue is ''
 
@@ -547,6 +546,33 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
   .property 'listViewClass'
 
   ###
+    Escape a string for use as a regular expression.
+
+    @method escapeSearch
+    @param String str The string to excape
+    @return String The escaped string
+  ###
+  escapeSearch: (str) ->
+    jQuery.trim(str ? '').replace(ESCAPE_REG_EXP, ESCAPE_REPLACEMENT)
+
+  ###
+    Convert a plain string into a word search regular expression (for finding
+    matches for any word in the given string).
+
+    @method expressionFor
+    @param String str The string to convert
+    @return String The expression string
+  ###
+  expressionFor: (str) ->
+    search = @escapeSearch(str)
+    words = '(' + search.replace(/(\\\s)+/gi, '|').split('|').join(')|(') + ')'
+    searchExpression = [search]
+    searchExpression = [].concat(searchExpression, '|', words) if words.indexOf('|') >= 0
+    searchExpression.unshift('(')
+    searchExpression.push(')')
+    searchExpression.join('')
+
+  ###
     When called without arguments, the `complete()` method applies the
     `selected` property as the new value for the input and maintains the view's
     current focus state.
@@ -563,7 +589,7 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
     return @ unless value
     get(@, 'updater').call @, value
     @focus() if retainFocus
-    @hide()
+    set(@hide(), 'selected', null)
     @
 
   ###
@@ -718,6 +744,10 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
     set @, '_isListVisible', false
     @
 
+  sort: (arr, search) ->
+    sorter = get @, 'sorter'
+    sorter.call(@, arr, search)
+
   ###
     Substitutes `%s` and `%q` with corresponding search strings and returns
     a regular expression.
@@ -727,12 +757,9 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
     @param String search A regular expression safe search string
     @return RegExp
   ###
-  stringToSearchExpression: (str, search = get(@, '_escaped_search')) ->
-    searchExpression = get @, 'searchExpression'
-    searchExpression = searchExpression.toString().split('/').slice(1, -1).join('/')
-
-    str = str.replace SEARCH_SUBSTITUTION, search
-    str = str.replace QUERY_SUBSTITUTION, searchExpression
+  stringToSearchExpression: (str, search) ->
+    str = str.replace SEARCH_SUBSTITUTION, @escapeSearch(search)
+    str = str.replace QUERY_SUBSTITUTION, @expressionFor(search)
 
     new RegExp(str, 'gi')
 
@@ -745,6 +772,8 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
   suggestionsDidChange: Ember.observer ->
     set(@, 'selected', if get(@, 'autoSelect') then (get(@, 'suggestions.firstObject') ? null) else null)
   , 'suggestions', 'suggestions.length'
+
+  # didRetrieveSuggestions: (search, results) ->
 
   ###
     Respond to the up arrow key while focus is on the input view.
@@ -789,7 +818,7 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
     @param Boolean shift Shift key is pressed
   ###
   enterPressed: (e, alt, ctrl, meta, shift) ->
-    @complete()
+    @complete() if get(@, 'isListVisible')
 
   ###
     @private
@@ -801,13 +830,7 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
     @readOnly
   ###
   _searchExpression: Ember.computed ->
-    search = get(@, '_escaped_search')
-    words = '(' + search.replace(/(\\\s)+/gi, '|').split('|').join(')|(') + ')'
-    searchExpression = [search]
-    searchExpression = [].concat(searchExpression, '|', words) if words.indexOf('|') >= 0
-    searchExpression.unshift('(')
-    searchExpression.push(')')
-    searchExpression.join('')
+    @expressionFor get(@, 'search')
   .property('_escaped_search').readOnly()
 
   ###
@@ -820,9 +843,7 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
     @readOnly
   ###
   _escaped_search: Ember.computed ->
-    search = get(@, 'search')
-    search = jQuery.trim(search ? '')
-    search.replace(ESCAPE_REG_EXP, ESCAPE_REPLACEMENT)
+    @escapeSearch get(@, 'search')
   .property('search').readOnly()
 
   ###
@@ -849,10 +870,32 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
       # between child views. The run later helps to verify the focus has, in
       # fact, completely left the field.
       Ember.run.later @, ->
-        return unless get(@, 'state') is 'inDOM' and !@isFocused()
-        @complete(null, false) if get(@, 'autocompleteOnFocusOut')
+        if get(@, 'state') is 'inDOM' and                         # Input must be in DOM to update it
+        !@isFocused() and                                         # Verify focus was really lost
+        get(@, 'displayValue.length') >= get(@, 'minLength') and  # Don't autocomplete if display value is too short
+        get(@, 'autocompleteOnFocusOut')                          # Don't autocomplete if configured not to
+          @complete(null, false)
       , 100
   , 'hasFocus'
+
+  searchFor: (str, disableRemote) ->
+    promise = new Ember.RSVP.Promise((resolve, reject) =>
+      processResults = (search, results) ->
+        return unless str is search
+        @off('didRetrieveSuggestions', @, processResults)
+        Ember.run(null, resolve, @sort(results, str))
+
+      @on('didRetrieveSuggestions', @, processResults)
+
+      source = get(@, 'source') ? Ember.A()
+      source = (get(source) if typeOf(source) is 'string' and source isnt '') || source
+
+      set(@, 'search', str)
+
+      @_triggerRemote(source) unless disableRemote
+      @trigger('didRetrieveSuggestions', str, @_arraySearch(source)) if Ember.isArray(source)
+    )
+    promise
 
   ###
     @private
@@ -865,7 +908,8 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
     @param String property The property that changed
   ###
   _searchDidChange: Ember.observer (view, property) ->
-    len = get(@, 'search.length')
+    search = get(@, '_search') || ''
+    len = search.length
     len = len ? 0
 
     if len < get(@, 'minLength')
@@ -873,17 +917,13 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
       set @, 'allSuggestions', suggestions
       return suggestions
 
-    source = get(@, 'source') ? Ember.A()
-    source = (get(source) if typeOf(source) is 'string' and source isnt '') || source
-
-    if property is 'search'
-      @_triggerRemote(source)
-
-    if Ember.isArray(source)
-      set(@, 'allSuggestions', @_arraySearch(source))
+    @searchFor(search, property isnt '_search').then((results) =>
+      displayValue = get @, 'displayValue'
+      set(@, 'allSuggestions', results) if search is displayValue
+    )
 
     get @, 'allSuggestions'
-  , 'search', 'matcher', 'minLength', 'source', 'source.length'
+  , '_search', 'matcher', 'minLength', 'source', 'source.length'
 
   ###
     @private
@@ -948,7 +988,7 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
     @method _displayValueChangeHandler
   ###
   _displayValueChangeHandler: ->
-    set(@, 'search', if get(@, 'displayValue.length') < get(@, 'minLength') then '' else get(@, 'displayValue'))
+    set(@, '_search', if get(@, 'displayValue.length') < get(@, 'minLength') then '' else get(@, 'displayValue'))
 
 
 ###############################################################################

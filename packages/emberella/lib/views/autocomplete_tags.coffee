@@ -10,12 +10,14 @@ Emberella = window.Emberella
 jQuery = window.jQuery
 get = Ember.get
 set = Ember.set
+typeOf = Ember.typeOf
 
 ###
   `Emberella.AutocompleteTagsView` combines the abilities of
   `Emberella.AutocompleteView` and `Emberella.TagsInput`.
 
   TODO: The basics work, but there is much todo here.
+  TODO: Refactor to better integrate tags/autocomplete functionality.
 
   @class AutocompleteTagsView
   @namespace Emberella
@@ -23,6 +25,31 @@ set = Ember.set
 ###
 
 Emberella.AutocompleteTagsView = Emberella.AutocompleteView.extend
+  ###
+    The level of effort this view should make to swap user input with the most
+    likely autocomplete suggestion.
+
+    This setting comes into play primarily when a user pastes text that
+    contains delimiter strings into the autocomplete tags field. The pasted
+    text may then be optionally replaced or rejected automatically depending
+    on the `autocompleteThreshold`. You may also add custom handling to the
+    `didAddValue` event to inject entirely custom logic.
+
+    0: Leave newly added strings as they are. No autocomplete to be attempted.
+
+    1: Attempt to replace each newly added string with the top-ranked
+       suggestion. If no suggestions can be found, leave the original string
+       as is.
+
+    2: Attempt to replace each newly added string with the top-ranked
+       suggestion. Reject/remove any string without suggestions.
+
+    @property autocompleteThreshold
+    @type Integer
+    @default 1
+  ###
+  autocompleteThreshold: 1
+
   ###
     Binds the `displayValue` property to the tag input view's value. As
     `displayValue` changes, the `search` property may eventually be updated to
@@ -101,6 +128,8 @@ Emberella.AutocompleteTagsView = Emberella.AutocompleteView.extend
   ###
   inputViewClass: 'Emberella.AutocompleteTagsInputView'
 
+  updater: Ember.aliasMethod('capture')
+
   ###
     Create a new tag using the currently selected suggestion.
 
@@ -110,6 +139,7 @@ Emberella.AutocompleteTagsView = Emberella.AutocompleteView.extend
   capture: ->
     return unless (inputView = get(@, 'inputView'))?
     inputView.capture() if inputView.capture?
+    set(@, 'selected', null)
     @
 
   ###
@@ -138,6 +168,65 @@ Emberella.AutocompleteTagsView = Emberella.AutocompleteView.extend
     return unless (inputView = get(@, 'inputView'))?
     inputView.focus(e)
 
+  ###
+    Override this method to inject custom tag creation/retrieval logic into
+    your tag input view.
+
+    @event didAddValue
+    @param {String|Object} value A processed (delimiter split) value to add
+    @param Integer idx The index at which to insert the new value
+    @param Array results The autocomplete suggestions, if any
+    @param String searchValue String used to search for autocomplete suggestions
+  ###
+  didAddValue: Ember.K
+
+  ###
+    Override this method to inject custom rejection logic into your view.
+
+    @event didRejectValue
+    @param String value The string that got rejected
+    @param Integer idx The index at which the value was rejected
+  ###
+  didRejectValue: Ember.K
+
+  ###
+    @protected
+
+    If a user pastes a string into the autocomplete field, tags may be created
+    outside of the autocomplete interface. This method attempts to address this
+    scenario by assembling suggestions for any newly added strings.
+
+    @method _didAddValue
+    @param {String|Object} value The newly added tag value
+    @param Integer idx The index at which to insert the new value
+  ###
+
+  # TODO: Improve handling of duplicate tags
+  _didAddValue: (value, idx) ->
+    content = get(@, 'content')
+    autocompleteThreshold = get(@, 'autocompleteThreshold')
+
+    if autocompleteThreshold and typeOf(value) is 'string'
+      @searchFor(value).then((results) =>
+        return unless (inputView = get(@, 'inputView'))?
+        idx = get(@, 'content').indexOf value
+        if results? and results.length and (result = results[0]) isnt value
+          inputView.swap(value, result)
+          @trigger 'didAddValue', result, idx, results
+        else
+          if autocompleteThreshold is 2
+            cursor = get(inputView, 'cursor')
+            content.removeAt idx
+            set(inputView, 'cursor', idx)
+            @trigger 'didRejectValue', value, idx, results
+          else
+            @trigger 'didAddValue', value, idx, results
+      )
+    else
+      @trigger 'didAddValue', value, idx
+
+    null
+
 
 ###############################################################################
 ###############################################################################
@@ -165,6 +254,7 @@ Emberella.AutocompleteTagsInputView = Emberella.TagsInput.extend Emberella.Membe
     'deleteTitle'
     'tagOnFocusOut:autocompleteOnFocusOut'
     'selected'
+    'highlighter'
   ]
 
   ###
@@ -174,5 +264,10 @@ Emberella.AutocompleteTagsInputView = Emberella.TagsInput.extend Emberella.Membe
     @method tagify
     @return Array
   ###
-  tagify: ->
-    [get(@, 'selected')]
+  tagify: (value) ->
+    selected = get(@, 'selected')
+    set(@, 'selected', null)
+    if selected? then [selected] else @_super(value)
+
+  _didAddValue: (value, idx) ->
+    @dispatch('_didAddValue', value, idx)

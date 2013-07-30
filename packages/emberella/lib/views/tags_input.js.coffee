@@ -30,6 +30,13 @@ ESCAPE_REPLACEMENT = '\\$&'
   With styling, the `Emberella.TagsInput` can nearly mimic the experience of
   entering email addresses in the "To:" field of Mac OS X Mail.
 
+  TODO: Multi-select
+  TODO: drag and drop rearrangement
+  TODO: Improved handling for duplicate tags
+  TODO: Code cleanup and refactor to allow tag UI to integrate into other
+        views, perhaps as a mixin
+  TODO: Multiple cursors to allow invalid tags to remain editable in place
+
   @class TagsInput
   @namespace Emberella
   @extends Ember.ContainerView
@@ -393,9 +400,9 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     method will be called. Tag addition will be aborted if `willAddValue()`
     returns `false`.
 
-    After a tag is inserted into the `content`, the `didAddValue()` method
-    will be called. Override `didAddValue()` to inject custom logic for
-    handling newly created tags.
+    After a tag is inserted into the `content`, the `didAddValue` event
+    will be triggered. Override `didAddValue()` or add an event handler to
+    inject custom logic for handling newly created tags.
 
     @method addTag
     @param {String|Object} value A value to insert into the content array
@@ -409,9 +416,8 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     unless typeOf(@[method]) is 'function'
       throw new TypeError("Attempting to add tag of an unsupported type " + type)
 
-    unless (value = @[method](value)) is false or @willAddValue(value, idx) is false
-      @insertContent(value, idx)
-      @didAddValue(value, idx)
+    unless (value = @[method](value)) is false or @_willAddValue(value, idx) is false
+      @insertContent(value, idx)._didAddValue(value, idx)
 
     @
 
@@ -758,7 +764,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
 
     content.removeObject value
     set(@, 'cursor', idx)
-    @didRemoveValue value
+    @trigger 'didRemoveValue', value
     @
 
   ###
@@ -832,17 +838,6 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   willAddValue: Ember.K
 
   ###
-    Override this method to inject custom tag creation/retrieval logic into
-    your tag input view. Once the tag is ready, add it to the listing by
-    calling `swap(value, tag)` (where `tag` is the created/retrieved value).
-
-    @method didAddValue
-    @param {String|Object} value A processed (delimiter split) value to add
-    @param Integer idx The index at which to insert the new value
-  ###
-  didAddValue: Ember.K
-
-  ###
     Override this method to inject custom behavior prior to a tag's removal.
 
     Return `false` to prevent the tag's removal.
@@ -853,10 +848,21 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   willRemoveValue: Ember.K
 
   ###
+    Override this method to inject custom tag creation/retrieval logic into
+    your tag input view. Once the tag is ready, add it to the listing by
+    calling `swap(value, tag)` (where `tag` is the created/retrieved value).
+
+    @event didAddValue
+    @param {String|Object} value A processed (delimiter split) value to add
+    @param Integer idx The index at which to insert the new value
+  ###
+  didAddValue: Ember.K
+
+  ###
     Override this method to inject custom delete logic for tags that were just
     successfully removed from the content array.
 
-    @method didRemoveValue
+    @event didRemoveValue
     @param {String|Object} value A tag being removed
   ###
   didRemoveValue: Ember.K
@@ -1058,6 +1064,13 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     @capture content
     @updateValue()
   , 'delimiter'
+
+  _willAddValue: (value, idx) ->
+    @willAddValue(value, idx)
+
+  _didAddValue: (value, idx) ->
+    @trigger 'didAddValue', value, idx
+    @
 
   ###
     @private
@@ -1328,7 +1341,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
       Ember.warn "Attempted to add an object without a value at " + get(@, 'contentPath')
       return false
 
-    value
+    if @contains(value) then false else value
 
   ###
     @private
