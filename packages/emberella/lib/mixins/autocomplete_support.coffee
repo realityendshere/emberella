@@ -129,9 +129,10 @@ Emberella.AutocompleteSupport = Ember.Mixin.create
 
     if Ember.isArray(suggestions)
       @provideSearchResults(actionContext, search, url, suggestions)
-    else
-      @setCacheResults(actionContext, url, Ember.A())
+    else if !suggestions?
+      @setCacheResults(actionContext, url, {'isLoading': true})
       @didRequestSuggestions(actionContext, search, url) unless (search is '' or url is '')
+    null
 
   ###
     Override this method in your controller to perform a query for

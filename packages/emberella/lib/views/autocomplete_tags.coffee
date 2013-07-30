@@ -210,15 +210,15 @@ Emberella.AutocompleteTagsView = Emberella.AutocompleteView.extend
       @searchFor(value).then((results) =>
         return unless (inputView = get(@, 'inputView'))?
         idx = get(@, 'content').indexOf value
-        if results? and results.length and (result = results[0]) isnt value
+        if results? and results.length and (result = results[0]) isnt value and !(isContained = inputView.contains(result))
           inputView.swap(value, result)
           @trigger 'didAddValue', result, idx, results
         else
-          if autocompleteThreshold is 2
-            cursor = get(inputView, 'cursor')
+          if autocompleteThreshold is 2 or isContained
+            isEnd = get(inputView, 'cursor') is content.length
             content.removeAt idx
-            set(inputView, 'cursor', idx)
-            @trigger 'didRejectValue', value, idx, results
+            set(inputView, 'cursor', content.length) if isEnd
+            @trigger('didRejectValue', value, idx, results) if autocompleteThreshold is 2
           else
             @trigger 'didAddValue', value, idx, results
       )
@@ -266,7 +266,6 @@ Emberella.AutocompleteTagsInputView = Emberella.TagsInput.extend Emberella.Membe
   ###
   tagify: (value) ->
     selected = get(@, 'selected')
-    set(@, 'selected', null)
     if selected? then [selected] else @_super(value)
 
   _didAddValue: (value, idx) ->

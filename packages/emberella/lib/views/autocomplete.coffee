@@ -589,7 +589,7 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
     return @ unless value
     get(@, 'updater').call @, value
     @focus() if retainFocus
-    set(@hide(), 'selected', null)
+    @hide()
     @
 
   ###
@@ -854,6 +854,7 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
     @method _displayValueDidChange
   ###
   _displayValueDidChange: Ember.observer ->
+    set(@, 'allSuggestions', Ember.A())
     if get(@, 'displayValue.length') < get(@, 'minLength') then set(@hide(), 'search', '') else get(@show(), 'debouncedValueDidChange')()
   , 'displayValue', 'minLength'
 
@@ -866,15 +867,23 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
   ###
   _hasFocusDidChange: Ember.observer ->
     if !get(@, 'hasFocus')
+      displayValue = get(@, 'displayValue')
+      selected = get(@, 'selected')
       # The field may appear to lose focus frequently as the focus shifts
       # between child views. The run later helps to verify the focus has, in
       # fact, completely left the field.
       Ember.run.later @, ->
-        if get(@, 'state') is 'inDOM' and                         # Input must be in DOM to update it
-        !@isFocused() and                                         # Verify focus was really lost
-        get(@, 'displayValue.length') >= get(@, 'minLength') and  # Don't autocomplete if display value is too short
-        get(@, 'autocompleteOnFocusOut')                          # Don't autocomplete if configured not to
-          @complete(null, false)
+        if !@isFocused() and                            # Verify focus was really lost
+        displayValue.length >= get(@, 'minLength') and  # Don't autocomplete if display value is too short
+        get(@, 'autocompleteOnFocusOut')                # Don't autocomplete if configured not to
+          @complete()
+          # TODO: Fix this code; it sometimes leads to extra tags in
+          #       autocomplete with tags view.
+          # @searchFor(displayValue).then((results) =>
+          #   return unless get(@, 'state') is 'inDOM'    # Input must be in DOM to update it
+          #   result = if selected in results then selected else results[0]
+          #   @complete(result) if result
+          # )
       , 100
   , 'hasFocus'
 
