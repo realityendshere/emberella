@@ -44,6 +44,14 @@ placeholder objects. Loaded records are "cached" in a sparse array until the
 
 ### Helper(s)
 
+**big_data_helpers**
+
+Iterating over a massive array can cause your app to become unresponsive. This
+helper adds a single method to the Emberella namespace: `forEachAsync()`. The
+function will iterate over an array in short bursts with timeouts between to
+allow the browser to perform other actions and reduce the chances of an
+unresponsive browser window.
+
 **function_helpers**
 
 Sometimes the best way to boost performance is to slow things down. I found
@@ -55,6 +63,11 @@ The function helpers mixin includes the `throttle` and `debounce` methods from
 Underscore.js.
 
 ### Mixins
+
+**Emberella.AutocompleteSupport**
+
+This controller mixin adds a handful of methods that make asynchronously
+assembling suggestions for an autocomplete view a bit easier.
 
 **Emberella.DraggableMixin**
 
@@ -85,18 +98,31 @@ The alpha-numeric and punctuation keys do still require a key code reference;
 if a key isn't mapped to a developer-friendly name, the keyboard event will be
 sent along to a method like `key65Pressed`.
 
-**Emberella.QueueableMixin**
+**Emberella.MembershipMixin**
+
+This view mixin allows tighter integration between Ember views and their
+ancestors. Views often need property bindings with their parent (or even a
+grandparent) view to coordinate states, templates, configuartion options, and
+event handling. This mixin makes binding multiple properties between two
+related views easier and gives member views a method for sending events and
+messages to a target ancestor view.
+
+**Emberella.MQMixin**
 
 Extend an array controller with this mixin to add a processing queue.
 
-If processing an object is computationally intensive (e.g. image processing)
-or uses to much of a limited resource (e.g. server connections, bandwidth),
+If processing an object is computationally expensive (e.g. image processing)
+or uses too much of a limited resource (e.g. server connections, bandwidth),
 then each item can wait in the queue until its turn to be processed. Items are
 processed in the order they are received.
 
 I use this mixin to manage file uploads. If the user wishes to upload 1000
 files at once, I place them in a queue and send files to the server a few at a
 time.
+
+**Emberella.QueueableMixin**
+
+Deprecated. Use `Emberella.MQMixin` instead.
 
 **Emberella.RemoteQueryBindingsMixin**
 
@@ -171,10 +197,28 @@ that is what this view is supposed to do.
 
 An individual listing for an `Emberella.GridView`.
 
+**Emberella.AutocompleteView**
+
+Coordinates a text field and collection view to display a list of suggested
+completions as the user types.
+
+**Emberella.AutocompleteTagsView**
+
+An autocomplete view that creates a tag each time the user commits to one of
+the listed suggestions.
+
+This user interaction is similar to entering email addresses into the "To:"
+field in OS X Mail (and many other email clients).
+
 **Emberella.FlexibleTextArea**
 
 A text area with the ability to grow vertically as the line count of its value
 grows.
+
+**Emberella.FlexibleTextField**
+
+A text field with the ability to grow horizontally as the value grows
+in length.
 
 **Emberella.ImageView**
 
@@ -195,6 +239,16 @@ A wrapper for a "range" type input.
 
 Want to give something 5 stars? That's what this view is for. You'll need to
 provide your own stars and styles for the time being.
+
+**Emberella.TagsInput**
+
+The aim of this view is to present users with an easy to use tag input and
+creation experience that approaches the quality of a desktop interaction
+pattern. Rather than simply instructing users to "split tags with a comma" in a
+plain text input, the `Emberella.TagsInput` creates distinctive listing views
+for each tag. Tags can also be used to represent complex objects. Thus this
+tags input view may be used to display an array of words or establish complex
+relationships between objects through text entry.
 
 ## Getting Starting with Emberella
 
@@ -235,7 +289,7 @@ I can't list everything here. But here are some major TODOs.
 * More/better documentation to explain how to use this stuff
 * Examples that showcase these components
 * Unit tests
-* Refactoring of components I built awhile ago with less experience
+* Refactoring of components
 * Adding some packaging to make it easy to install Emberella in your app
 * Packaged styling for certain views
 
