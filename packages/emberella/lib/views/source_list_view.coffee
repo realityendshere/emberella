@@ -11,6 +11,16 @@ get = Ember.get
 set = Ember.set
 typeOf = Ember.typeOf
 
+DEFAULT_ITEM_TEMPLATE = Ember.Handlebars.compile [
+  '{{view.displayContent}}'
+].join(' ')
+
+DEFAULT_HEADING_TEMPLATE = Ember.Handlebars.compile([
+  '<span class="emberella-source-list-heading-content">'
+    '{{view.content}}'
+  '</span>'
+].join(' '))
+
 ###
   Displays a "source listing" with distinctive heading views with their own
   styling, content, and interaction patterns. In theory,
@@ -22,13 +32,13 @@ typeOf = Ember.typeOf
   @extends Emberella.CollectionView
   @uses Emberella.MembershipMixin
 ###
-Emberella.SourceListView = Emberella.CollectionView.extend Emberella.MembershipMixin,
+Emberella.SourceListView = Emberella.ContainerView.extend Emberella.MembershipMixin,
   # Private bookkeeping property
   _listingDepth: 0
 
   leadViewBinding: '_self'
 
-  isVisibleBinding: 'parentView.isListingVisible'
+  isVisibleBinding: 'parentView.isVisible'
 
   ###
     @private
@@ -51,9 +61,7 @@ Emberella.SourceListView = Emberella.CollectionView.extend Emberella.MembershipM
     @type Handlebars
     @final
   ###
-  defaultTemplate: Ember.Handlebars.compile [
-    '{{view.displayContent}}'
-  ].join(' ')
+  defaultTemplate: DEFAULT_ITEM_TEMPLATE
 
   ###
     Add the 'emberella-source-list' class to the listing element. Use this
@@ -64,6 +72,24 @@ Emberella.SourceListView = Emberella.CollectionView.extend Emberella.MembershipM
     @default ["emberella-source-list"]
   ###
   classNames: [ "emberella-source-list" ]
+
+  ###
+    Specifies which child views to render
+
+    @property childViews
+    @type Array
+    @default ['headingView', 'listView']
+  ###
+  childViews: ['headingView', 'listView']
+
+  ###
+    Flag to indicate if this is the root of the source listing tree.
+
+    @property isOriginalSource
+    @type Boolean
+    @default true
+  ###
+  isOriginalSource: true
 
   ###
     Specify if item views in this collection should be visible.
@@ -136,6 +162,15 @@ Emberella.SourceListView = Emberella.CollectionView.extend Emberella.MembershipM
   headingViewClass: 'Emberella.SourceListHeadingView'
 
   ###
+    An `Ember.CollectionView` class to use to render the content list.
+
+    @property listViewClass
+    @type {String|Class}
+    @default 'Emberella.SourceCollectionView'
+  ###
+  listViewClass: 'Emberella.SourceCollectionView'
+
+  ###
     An `Ember.View` class to use to render each item listing.
 
     @property itemViewClass
@@ -145,6 +180,44 @@ Emberella.SourceListView = Emberella.CollectionView.extend Emberella.MembershipM
   itemViewClass: 'Emberella.SourceListItemView'
 
   ###
+    Computes the root source listing: the ancestor view that ultimately spawned
+    this view isntance.
+
+    @property originalSource
+    @type Ember.View
+  ###
+  originalSource: Ember.computed ->
+    result = @
+
+    findOriginalSource = (view) ->
+      result = if get(view, 'isOriginalSource') then view else findOriginalSource(get(view, 'parentView'))
+
+    findOriginalSource @
+
+    result
+  .property('isOriginalSource', 'parentView').readOnly()
+
+  ###
+    The heading view instance.
+
+    @property headingView
+    @type Ember.View
+  ###
+  headingView: Ember.computed ->
+    @_getViewClass('headingViewClass')
+  .property 'headingViewClass'
+
+  ###
+    The collection view instance.
+
+    @property listView
+    @type Ember.View
+  ###
+  listView: Ember.computed ->
+    @_getViewClass('listViewClass')
+  .property 'listViewClass'
+
+  ###
     An array of all item listings contained in this view.
 
     @property listings
@@ -152,7 +225,7 @@ Emberella.SourceListView = Emberella.CollectionView.extend Emberella.MembershipM
   ###
   listings: Ember.computed ->
     @getListings()
-  .property('childViews.@each', 'childViews.@each.listings')
+  .property('listView.childViews.@each', 'listView.childViews.@each.listings')
 
   ###
     An array of all visible (i.e. `isVisible` is `true`) item listings
@@ -163,7 +236,7 @@ Emberella.SourceListView = Emberella.CollectionView.extend Emberella.MembershipM
   ###
   visibleListings: Ember.computed ->
     @getVisibleListings()
-  .property('childViews.@each', 'childViews.@each.isVisible', 'childViews.@each.visibleListings')
+  .property('listView.childViews.@each', 'childViews.@each.isVisible', 'listView.childViews.@each.visibleListings')
 
   ###
     How far removed from the base listing this view instance is.
@@ -175,12 +248,11 @@ Emberella.SourceListView = Emberella.CollectionView.extend Emberella.MembershipM
     privateKey = '_' + key
 
     if arguments.length is 1
-      parentDepth = parseInt get(@, 'parentView.listingDepth'), 10
-      return if isNaN(parentDepth) then get(@, privateKey) else parentDepth + 1
+      return if (get(@, 'isOriginalSource') or isNaN(listingDepth = parseInt(get(@, 'leadView.listingDepth'), 10))) then get(@, privateKey) else listingDepth + 1
 
     else
       return set(@, privateKey, value)
-  .property('parentView.listingDepth')
+  .property('leadView.listingDepth')
 
   ###
     Assembles an array of all visible (i.e. `isVisible` is `true`) item
@@ -190,7 +262,7 @@ Emberella.SourceListView = Emberella.CollectionView.extend Emberella.MembershipM
     @return Array
   ###
   getVisibleListings: ->
-    @getListings true
+    @getListings(true)
 
   ###
     Assembles an array of listings contained in this view.
@@ -227,30 +299,6 @@ Emberella.SourceListView = Emberella.CollectionView.extend Emberella.MembershipM
   toggleVisibility: ->
     @toggleProperty('isListingVisible')
     @
-
-  # Overrides `Ember.CollectionView`
-  createChildView: (viewClass, attrs) ->
-    heading = get(attrs, 'content.heading') if attrs?
-    children = get(attrs, 'content.children') if attrs?
-
-    if (children?)
-      return @createChildView(@constructor,
-        heading: heading
-        content: children
-        leadViewBinding: 'parentView.leadView'
-        indentSizeBinding: 'leadView.indentSize'
-        headingPropertyBinding: 'leadView.headingProperty'
-      )
-
-    @_super(viewClass, attrs)
-
-  # Overrides `Ember.CollectionView`
-  arrayDidChange: (content, start, removed, added) ->
-    @_super(content, start, removed, added)
-
-    unless Ember.isEmpty(heading = get(@, 'heading'))
-      headingViewClass = @_getViewClass 'headingViewClass'
-      @insertAt(0, @createChildView(headingViewClass))
 
   ###
     @private
@@ -293,11 +341,7 @@ Emberella.SourceListHeadingView = Emberella.View.extend Ember.StyleBindingsMixin
     @type Handlebars
     @final
   ###
-  defaultTemplate: Ember.Handlebars.compile([
-    '<span class="emberella-source-list-heading-content">'
-      '{{view.content}}'
-    '</span>'
-  ].join(' '))
+  defaultTemplate: DEFAULT_HEADING_TEMPLATE
 
   ###
     Add the 'emberella-source-list-heading' class to the heading element.
@@ -359,6 +403,42 @@ Emberella.SourceListHeadingView = Emberella.View.extend Ember.StyleBindingsMixin
 
 
 ###
+  `Emberella.SourceCollectionView` is the default `listViewClass` for an
+  `Emberella.SourceListView`. It offers support for recursive creation of
+  source listing views.
+
+  @class SourceListItemView
+  @namespace Emberella
+  @extends Emberella.View
+  @uses Ember.StyleBindingsMixin
+  @uses Emberella.MembershipMixin
+###
+Emberella.SourceCollectionView = Emberella.CollectionView.extend Emberella.MembershipMixin,
+  inherit: ['itemViewClass', 'content', 'listingDepth', 'isVisible:isListingVisible']
+
+  # Overrides `Ember.CollectionView`
+  createChildView: (viewClass, attrs) ->
+    heading = get(attrs, 'content.heading') if attrs?
+    children = get(attrs, 'content.children') if attrs?
+
+    if (children?)
+      return @createChildView(get(@, 'leadView.constructor'),
+        isOriginalSource: false
+        heading: heading
+        content: children
+        leadViewBinding: 'parentView.leadView'
+        indentSizeBinding: 'leadView.indentSize'
+        headingPropertyBinding: 'leadView.headingProperty'
+      )
+
+    @_super(viewClass, attrs)
+
+
+###############################################################################
+###############################################################################
+
+
+###
   `Emberella.SourceListItemView` is the default `itemViewClass` for an
   `Emberella.SourceListView`. It can be extended or replaced as needed to
   customize the look or behavior of the listings in a source listing.
@@ -371,6 +451,8 @@ Emberella.SourceListHeadingView = Emberella.View.extend Ember.StyleBindingsMixin
 ###
 Emberella.SourceListItemView = Emberella.View.extend Ember.StyleBindingsMixin, Emberella.MembershipMixin,
   inherit: ['template', 'contentPath', 'isVisible:isListingVisible', 'listingDepth', 'indentSize']
+
+  leadViewBinding: 'parentView.leadView'
 
   ###
     Add the 'emberella-source-list-item' class to the listing element.
