@@ -73,6 +73,8 @@ Emberella.SourceListView = Emberella.ContainerView.extend Emberella.MembershipMi
   ###
   classNames: [ "emberella-source-list" ]
 
+  classNameBindings: [ 'isOriginalSource:emberella-source-original' ]
+
   ###
     Specifies which child views to render
 
@@ -434,6 +436,7 @@ Emberella.SourceCollectionView = Emberella.CollectionView.extend Emberella.Membe
     if (children?)
       return @createChildView(get(@, 'leadView.constructor'),
         isOriginalSource: false
+        elementId: null
         heading: heading
         content: children
         leadViewBinding: 'parentView.leadView'
