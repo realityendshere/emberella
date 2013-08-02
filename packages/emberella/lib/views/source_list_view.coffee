@@ -416,6 +416,16 @@ Emberella.SourceListHeadingView = Emberella.View.extend Ember.StyleBindingsMixin
 Emberella.SourceCollectionView = Emberella.CollectionView.extend Emberella.MembershipMixin,
   inherit: ['itemViewClass', 'content', 'listingDepth', 'isVisible:isListingVisible']
 
+  ###
+    Add the 'emberella-source-collection' class to the collection element. Use this
+    class to style your source listing's collection view.
+
+    @property classNames
+    @type Array
+    @default ["emberella-source-collection"]
+  ###
+  classNames: [ "emberella-source-collection" ]
+
   # Overrides `Ember.CollectionView`
   createChildView: (viewClass, attrs) ->
     heading = get(attrs, 'content.heading') if attrs?
