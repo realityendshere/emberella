@@ -41,7 +41,9 @@ Emberella.MultiArrayController = Ember.ArrayController.extend
     subArrays = Ember.A get(@, 'subArrays')
     subArrays = subArrays.uniq() unless get(@, 'allowDuplicates')
 
-    [].concat(@_super(), subArrays.map((name) =>
+    selfContent = @_super()
+
+    [].concat((if Ember.isArray(selfContent) then selfContent else []), subArrays.map((name) =>
       controller = get(@, 'controllers.' + name)
       heading = Ember.String.capitalize(name)
 
