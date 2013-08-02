@@ -29,5 +29,7 @@
 #= require ./views/tags_input
 #= require ./views/autocomplete
 #= require ./views/autocomplete_tags
+#= require ./views/source_list_view
 
 #= require ./controllers/sparse_array_controller
+#= require ./controllers/multi_array_controller
