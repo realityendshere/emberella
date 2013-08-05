@@ -28,6 +28,10 @@ Emberella.SelectableMixin = Ember.Mixin.create
   ###
   isSelectable: true #quack like a duck
 
+  init: ->
+    set @, '_selection', new Emberella.SelectionSet()
+    @_super()
+
   # allowsSelection: true #TODO: Enable this setting
 
   # allowsMultipleSelection: true #TODO: Enable this setting
@@ -56,10 +60,11 @@ Emberella.SelectableMixin = Ember.Mixin.create
   _selection: null
 
   ###
-    Contains intersection of `_selection` and `content`. This allows a
-    selection to be retained even if, for example, a filter removes a selected
-    object from the `content` property. When the filter is removed, the
-    previously selected object will, once again, appear to be selected.
+    The "active" selection: an array of items selected by the user that are
+    also present in the content array. This allows the selection to be retained
+    even if, for example, a filter removes a selected object from the `content`
+    property. When the filter is removed, the previously selected object will,
+    once again, appear to be selected.
 
     @property selection
     @type Array
@@ -67,10 +72,10 @@ Emberella.SelectableMixin = Ember.Mixin.create
   ###
   # TODO: Fix excessive array creation
   selection: Ember.computed ->
-    content = get(@, 'content')
+    content = @getActiveContent()
     selection = get(@, '_selection')
     selection.filter((item) -> content.contains(item))
-  .property('_selection.[]', 'content.[]')
+  .property('_selection.[]', 'content.[]', 'arrangedContent.[]')
 
   ###
     The first member of the content array that would be a valid selection. The
@@ -96,9 +101,18 @@ Emberella.SelectableMixin = Ember.Mixin.create
     get(@, 'lastObject')
   .property 'lastObject'
 
-  init: ->
-    set @, '_selection', new Emberella.SelectionSet()
-    @_super()
+  ###
+    Retrieve an array of items that could appear in the active selection.
+
+    The default behavior is simply to return the `content` array. Override this
+    method to intorduce custom retrieval or assembly of the array of
+    potentially selectable items.
+
+    @method getActiveContent
+    @return Array
+  ###
+  getActiveContent: ->
+    get(@, 'content')
 
   ###
     Manipulate the selection set.
