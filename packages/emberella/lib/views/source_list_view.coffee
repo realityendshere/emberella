@@ -53,17 +53,6 @@ Emberella.SourceListView = Emberella.ContainerView.extend Emberella.MembershipMi
   defaultHeadingProperty: 'heading'
 
   ###
-    @private
-
-    The default template for item listings.
-
-    @property defaultTemplate
-    @type Handlebars
-    @final
-  ###
-  defaultTemplate: DEFAULT_ITEM_TEMPLATE
-
-  ###
     Add the 'emberella-source-list' class to the listing element. Use this
     class to style your source listing view.
 
@@ -73,7 +62,7 @@ Emberella.SourceListView = Emberella.ContainerView.extend Emberella.MembershipMi
   ###
   classNames: [ "emberella-source-list" ]
 
-  classNameBindings: [ 'isOriginalSource:emberella-source-original' ]
+  classNameBindings: [ 'isOriginalSource:emberella-source-original', 'listingDepthClassName' ]
 
   ###
     Specifies which child views to render
@@ -255,6 +244,17 @@ Emberella.SourceListView = Emberella.ContainerView.extend Emberella.MembershipMi
     else
       return set(@, privateKey, value)
   .property('leadView.listingDepth')
+
+  ###
+    Generates a class name to indicate (and allow styling for) the current
+    "depth" of this source listing instance.
+
+    @property listingDepthClassName
+    @type String
+  ###
+  listingDepthClassName: Ember.computed ->
+    'emberella-source-list-' + get(@, 'listingDepth')
+  .property('listingDepth')
 
   ###
     Assembles an array of all visible (i.e. `isVisible` is `true`) item
@@ -463,9 +463,20 @@ Emberella.SourceCollectionView = Emberella.CollectionView.extend Emberella.Membe
   @uses Emberella.MembershipMixin
 ###
 Emberella.SourceListItemView = Emberella.View.extend Ember.StyleBindingsMixin, Emberella.MembershipMixin,
-  inherit: ['template', 'contentPath', 'isVisible:isListingVisible', 'listingDepth', 'indentSize']
+  inherit: ['contentPath', 'isVisible:isListingVisible', 'listingDepth', 'indentSize']
 
   leadViewBinding: 'parentView.leadView'
+
+  ###
+    @private
+
+    The default template for item listings.
+
+    @property defaultTemplate
+    @type Handlebars
+    @final
+  ###
+  defaultTemplate: DEFAULT_ITEM_TEMPLATE
 
   ###
     Add the 'emberella-source-list-item' class to the listing element.
