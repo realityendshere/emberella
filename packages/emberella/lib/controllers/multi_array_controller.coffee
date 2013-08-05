@@ -54,6 +54,32 @@ Emberella.MultiArrayController = Ember.ArrayController.extend
     ))
   .property('content', 'sortProperties.@each', 'needs.@each', 'subArrays.@each')
 
+
+  ###
+    Assembles array of objects contained in this mixed array controller and all
+    descendant arrays.
+
+    @method getFlattenedContent
+    @return Array
+  ###
+  getFlattenedContent: ->
+    arrangedContent = get @, 'arrangedContent'
+
+    flatten = (input, arr = Ember.A()) ->
+      item = get(input, 'children') || input
+
+      if Ember.isArray(item)
+        item.forEach((value) ->
+          flatten(value, arr)
+        )
+      else
+        arr.push item
+
+      arr
+
+    flatten arrangedContent
+
+
   ###
     @private
 
