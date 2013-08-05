@@ -143,7 +143,7 @@ Emberella.SelectableMixin = Ember.Mixin.create
 
     if toggle or range
       if toggle
-        if @inSelection(item) then @deselectObjects(item) else @selectObjects(item)
+        if @inSelection(item) then @deselectObject(item) else @selectObject(item)
       else if range
         targetIdx = +@indexOf(item)
         indexOfCursor = @indexOfCursor()
@@ -152,8 +152,10 @@ Emberella.SelectableMixin = Ember.Mixin.create
         selectionRange = [start..end]
         @selectObjects(selectionRange)
     else
+      Ember.beginPropertyChanges(@)
       @deselectAll() unless retainSelection
-      @selectObjects(item)
+      @selectObject(item)
+      Ember.endPropertyChanges(@)
 
     @
 
