@@ -42,6 +42,11 @@ While waiting for data to load, the SparseArrayController will return
 placeholder objects. Loaded records are "cached" in a sparse array until the
 `reset` or `unset` methods get called.
 
+**Emberella.MultiArrayController**
+
+Nest multiple array controllers into a single controller. The array of arrays
+can be used to structure data for a source listing view.
+
 ### Helper(s)
 
 **big_data_helpers**
@@ -234,6 +239,10 @@ image is about to be fetched and when loading is complete.
 **Emberella.RangeInput**
 
 A wrapper for a "range" type input.
+
+**Emberella.SourceListView**
+
+Renders a source list view that renders multiple lists with headings.
 
 **Emberella.StarRating**
 
