@@ -37,11 +37,11 @@ Emberella.MultiArrayController = Ember.ArrayController.extend
   ###
   subArrays: []
 
-  arrangedContent: Ember.computed ->
+  arrangedContent: Ember.computed (key, value) ->
     subArrays = Ember.A get(@, 'subArrays')
     subArrays = subArrays.uniq() unless get(@, 'allowDuplicates')
 
-    selfContent = @_super()
+    selfContent = @_super(key, value)
 
     [].concat((if Ember.isArray(selfContent) then selfContent else []), subArrays.map((name) =>
       controller = get(@, 'controllers.' + name)
