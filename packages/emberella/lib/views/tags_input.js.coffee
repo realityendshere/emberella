@@ -417,7 +417,8 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
       throw new TypeError("Attempting to add tag of an unsupported type " + type)
 
     unless (value = @[method](value)) is false or @_willAddValue(value, idx) is false
-      @insertContent(value, idx)._didAddValue(value, idx)
+      @insertContent(value, idx)
+      @_didAddValue(value, idx)
 
     @
 
