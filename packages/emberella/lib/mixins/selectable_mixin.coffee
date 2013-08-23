@@ -75,7 +75,7 @@ Emberella.SelectableMixin = Ember.Mixin.create
     content = @getActiveContent()
     selection = get(@, '_selection')
     selection.filter((item) -> content.contains(item))
-  .property('_selection.[]', 'content.[]', 'arrangedContent.[]')
+  .property('_selection.[]', 'content', 'arrangedContent.[]')
 
   ###
     The first member of the content array that would be a valid selection. The
@@ -104,15 +104,15 @@ Emberella.SelectableMixin = Ember.Mixin.create
   ###
     Retrieve an array of items that could appear in the active selection.
 
-    The default behavior is simply to return the `content` array. Override this
-    method to intorduce custom retrieval or assembly of the array of
-    potentially selectable items.
+    The default behavior is simply to return the `arrangedContent` array.
+    Override this method to intorduce custom retrieval or assembly of the
+    array of potentially selectable items.
 
     @method getActiveContent
     @return Array
   ###
   getActiveContent: ->
-    get(@, 'content')
+    get(@, 'arrangedContent')
 
   ###
     Manipulate the selection set.
