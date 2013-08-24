@@ -51,10 +51,12 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
 
   init: ->
     ret = @_super()
-    value = get(@, 'value')
+    value = get(@, 'value') ? ''
+    set(@, 'content', get(@, 'content') ? Ember.A())
     set(@, '_value', value)
-    @capture value unless Ember.isEmpty(value)
-    @_contentDidChange() if Ember.isArray(get(@, 'content'))
+    @capture value
+    @_setupContent()
+    @_renderList()
     ret
 
   ###
@@ -448,8 +450,6 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     inputValue = get(@, 'inputView.value')
     value = inputValue unless typeOf(value) is 'string'
 
-    set(@, 'content', Ember.A()) unless Ember.isArray(get(@, 'content'))
-
     values = @tagify(value)
     len = get(@, 'content.length')
 
@@ -738,7 +738,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   refocus: (force, beginning) ->
     inputView = get(@, 'inputView')
 
-    return unless inputView? and (force or @isFocused())
+    return unless force or @isFocused()
 
     if get(inputView, 'state') is 'inDOM'
       @focus({}, beginning)
@@ -875,8 +875,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   ###
   didInsertElement: ->
     @_super()
-    set(@, '_cursor', get(@, 'content.length') || 0)
-    @_updateChildViews() if get(@, 'content') isnt undefined
+    set(@, 'cursor', get(@, 'content.length'))
 
   ###
     Respond to a click event on the view element. The tags input will try to
@@ -1047,7 +1046,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     @method _cursorDidChange
   ###
   _cursorDidChange: Ember.observer ->
-    @_updateCursorLocation() if get(@, 'childViews.length')
+    if get(@, 'childViews.length') then @_updateCursorLocation() else @_updateChildViews()
   , 'cursor'
 
   ###
@@ -1247,7 +1246,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     itemViewClass = @getItemViewClass()
 
     content = get(@, 'content')
-    contentLength = get(@, 'content.length') || 0
+    contentLength = get(@, 'content.length')
 
     for i in [0...Math.max(childViewsLength, contentLength)]
       childView = @objectAt(i)
@@ -1436,7 +1435,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   ###
   _contentWillChange: Ember.beforeObserver ->
     content = get(@, 'content')
-    len = get(@, 'content.length') || 0
+    len = if content then get(content, 'length') else 0
 
     @contentArrayWillChange @, 0, len, undefined
     @contentWillChange @
