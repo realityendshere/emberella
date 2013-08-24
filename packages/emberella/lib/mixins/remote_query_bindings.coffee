@@ -34,8 +34,10 @@ defineProperty = Ember.defineProperty
 Emberella.RemoteQueryBindingsMixin = Ember.Mixin.create
 
   init: ->
-    @_super()
+    ret = @_super()
     @applyRemoteQueryBindings()
+    get @, 'remoteQuery'
+    ret
 
   ###
     The query object: a plain object to send as query parameters.
