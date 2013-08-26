@@ -23,8 +23,9 @@ set = Ember.set
 ###
 Emberella.MultiArrayController = Ember.ArrayController.extend
   init: ->
+    ret = @_super()
     @_subArraysDidChange()
-    @_super()
+    ret
 
   ###
     An array of strings describing the names of array controllers to include
