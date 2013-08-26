@@ -145,6 +145,12 @@ retrieveFromCurrentState = Ember.computed((key, value) ->
 ###
 
 Emberella.MQObject = Ember.ObjectProxy.extend
+  init: ->
+    @_super()
+
+    # Setup a new state manager with a reference to this object instance
+    stateManager = Emberella.MQStateManager.create queueItem: @
+    set(this, 'mqStateManager', stateManager)
 
   ###
     @property isQueueableItem
@@ -219,13 +225,6 @@ Emberella.MQObject = Ember.ObjectProxy.extend
   ###
   isQueueItemError: retrieveFromCurrentState
 
-  init: ->
-    @_super()
-
-    # Setup a new state manager with a reference to this object instance
-    stateManager = Emberella.MQStateManager.create queueItem: @
-    set(this, 'mqStateManager', stateManager)
-
   ###
     Send a message to the state manager. Valid messages may cause the state to
     change. Others will throw an exception.
@@ -262,6 +261,21 @@ Emberella.MQObject = Ember.ObjectProxy.extend
 ###
 Emberella.MQMixin = Ember.Mixin.create()
 Emberella.MQMixin.reopen
+  init: ->
+    ret = @_super.apply @, arguments
+
+    # create the queue array
+    set(@, 'queue', Ember.A())
+
+    #"prime" critical computed properties
+    get(@, 'waiting')
+    get(@, 'inProgress')
+    get(@, 'completed')
+    get(@, 'isComplete')
+    get(@, 'percentComplete')
+
+    ret
+
   ###
     @property isQueueable
     @type Boolean
@@ -426,11 +440,6 @@ Emberella.MQMixin.reopen
   nextInQueue: Ember.computed ->
     get(@, 'waiting.firstObject')
   .property('waiting').readOnly()
-
-  init: ->
-    # create the queue array
-    set(@, 'queue', Ember.A())
-    @_super.apply @, arguments
 
   ###
     Add an object, multiple object, or an array of object to the queue.
