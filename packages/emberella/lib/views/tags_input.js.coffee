@@ -296,7 +296,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   defaultTemplate: Ember.Handlebars.compile [
     '<span class="emberella-tag-item-content">{{view.displayContent}}</span>'
     '{{#if view.deleteCharacter}}'
-      '<a href="#" {{bindAttr title="view.deleteTitle"}} {{action "removeSelf" target=view bubbles=false}}>{{view.deleteCharacter}}</a>'
+      '<a href="#" {{bind-attr title="view.deleteTitle"}} {{action "removeSelf" target=view bubbles=false}}>{{view.deleteCharacter}}</a>'
     '{{/if}}'
   ].join(' ')
 
