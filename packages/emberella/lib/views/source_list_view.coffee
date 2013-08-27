@@ -209,6 +209,29 @@ Emberella.SourceListView = Emberella.ContainerView.extend Emberella.MembershipMi
   .property 'listViewClass'
 
   ###
+    An array of all item listings contained in this view.
+
+    @readOnly
+    @property listings
+    @type Array
+  ###
+  listings: Ember.computed ->
+    @getListings()
+  .volatile().readOnly()
+
+  ###
+    An array of all visible (i.e. `isVisible` is `true`) item listings
+    contained in this view.
+
+    @readOnly
+    @property visibleListings
+    @type Array
+  ###
+  visibleListings: Ember.computed ->
+    @getVisibleListings()
+  .volatile().readOnly()
+
+  ###
     How far removed from the base listing this view instance is.
 
     @property listingDepth
