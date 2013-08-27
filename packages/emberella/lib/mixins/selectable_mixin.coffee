@@ -313,14 +313,14 @@ Emberella.SelectableMixin = Ember.Mixin.create
       }
 
     @method indexOfSelection
+    @param content Array to search for current selection
     @return {Object|Boolean} `false` if nothing selected
   ###
-  indexOfSelection: ->
+  indexOfSelection: (content = get(@, 'arrangedContent').toArray()) ->
     result = indexes: Ember.A(), first: null, last: null
-    content = get(@, 'content').toArray()
     selection = get(@, 'selection')
 
-    return false if selection.length is 0
+    return false if selection.length is 0 or !Ember.isArray(content)
 
     for selected in selection
       idx = content.indexOf selected
