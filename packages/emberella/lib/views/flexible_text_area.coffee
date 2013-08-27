@@ -121,15 +121,17 @@ Emberella.FlexibleTextArea = Ember.TextArea.extend Ember.StyleBindingsMixin, Emb
   ###
   adjustHeight: Ember.observer ->
     sizer = @updateSizer()
+    value = get @, 'value'
 
-    #Run later to allow the DOM to update sizer node prior to computing height
+    #Run later to allow the DOM to update sizer node prior to computing width
     Ember.run.later(@, ->
+      return if get(@, 'isDestroyed') or get(@, 'isDestroying')
       height = +sizer.height()
       maxHeight = +get(@, 'maxHeight')
       height = maxHeight if maxHeight and height > maxHeight
       set @, 'height', height
     , 1)
-  , "value", "hasFocus"
+  , "value", "placeholder", "hasFocus"
 
   ###
     Create an invisible element to "mirror" the text area. Uses a jQuery
@@ -144,18 +146,24 @@ Emberella.FlexibleTextArea = Ember.TextArea.extend Ember.StyleBindingsMixin, Emb
     sizer = jQuery('<div/>') #create jQuery element
     sizer.addClass SIZER_CLASS #make it stylable
 
-    #copy styles from text area to sizer node
-    sizer.attr('style', getComputedStyle(get(@, 'element'), "").cssText)
+    syncStyles = ->
+      #copy styles from text field to sizer node
+      element = get(@, 'element')
+      return unless element
+      sizer.attr('style', getComputedStyle(element, "").cssText)
 
-    #hide the sizer node
-    sizer.css(
-      position: 'absolute'
-      zIndex: -1000
-      visibility: 'hidden'
-    )
+      #hide the sizer node
+      sizer.css(
+        position: 'absolute'
+        zIndex: -1000
+        visibility: 'hidden'
+        height: 'auto'
+      )
 
-    #Insert the sizer node and stash a reference to it in a property
-    @$().after(sizer)
+      #Insert the sizer node
+      @$().after(sizer)
+
+    Ember.run.schedule 'afterRender', @, syncStyles
     set(@, SIZER_PROPERTY, sizer)
     sizer
 
@@ -169,6 +177,7 @@ Emberella.FlexibleTextArea = Ember.TextArea.extend Ember.StyleBindingsMixin, Emb
   ###
   updateSizer: ->
     value = get(@, 'value') ? ''
+    value = (get(@, 'placeholder') ? '&nbsp;') if value is ''
     sizer = get(@, SIZER_PROPERTY) ? @createSizer()
     value = sizer.text(value).html().replace(/(\r\n|\n|\r)/gm, " <br/> ")
     sizer.html(value)
@@ -184,6 +193,15 @@ Emberella.FlexibleTextArea = Ember.TextArea.extend Ember.StyleBindingsMixin, Emb
     get(@, SIZER_PROPERTY)?.remove()
     set(@, SIZER_PROPERTY, null)
     null
+
+  ###
+    Handle insertion into the DOM.
+
+    @event didInsertElement
+  ###
+  didInsertElement: ->
+    @adjustHeight()
+    @_super()
 
   ###
     Handle imminent destruction.
