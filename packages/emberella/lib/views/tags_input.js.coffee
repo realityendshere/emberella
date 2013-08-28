@@ -51,10 +51,11 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
 
   init: ->
     ret = @_super()
-    value = get(@, 'value') ? ''
-    set(@, 'content', get(@, 'content') ? Ember.A())
+    value = get(@, 'value')
+    content = get(@, 'content')
+    set(@, 'content', Ember.A()) unless Ember.isArray content
     set(@, '_value', value)
-    @capture value
+    @capture(value) if value?
     @_setupContent()
     @_renderList()
     ret
@@ -431,9 +432,12 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   ###
   addTags: (values = Ember.A()) ->
     @beginPropertyChanges()
-    values.forEach((value) =>
-      @addTag(value)
-    )
+
+    cursor = get(@, 'cursor')
+
+    for value, i in values
+      @addTag(value, cursor + i)
+
     @endPropertyChanges()
     @
 
