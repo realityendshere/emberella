@@ -23,9 +23,11 @@ set = Ember.set
 ###
 Emberella.MultiArrayController = Ember.ArrayController.extend
   init: ->
-    ret = @_super()
     @_subArraysDidChange()
-    ret
+    Ember.run.scheduleOnce('sync', @, ->
+      @notifyPropertyChange 'subArrays'
+    )
+    @_super()
 
   ###
     An array of strings describing the names of array controllers to include
@@ -53,8 +55,7 @@ Emberella.MultiArrayController = Ember.ArrayController.extend
         children: controller
       })
     ))
-  .property('content', 'sortProperties.@each', 'needs.@each', 'subArrays.@each')
-
+  .property('content', 'sortProperties.@each', 'subArrays.@each')
 
   ###
     Assembles array of objects contained in this mixed array controller and all
@@ -79,7 +80,6 @@ Emberella.MultiArrayController = Ember.ArrayController.extend
       arr
 
     flatten arrangedContent
-
 
   ###
     @private
