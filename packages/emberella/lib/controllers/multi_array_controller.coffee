@@ -55,7 +55,7 @@ Emberella.MultiArrayController = Ember.ArrayController.extend
         children: controller
       })
     ))
-  .property('content', 'sortProperties.@each', 'subArrays.@each')
+  .property('content', 'sortProperties.@each', 'needs.@each', 'subArrays.@each')
 
   ###
     Assembles array of objects contained in this mixed array controller and all
@@ -81,6 +81,7 @@ Emberella.MultiArrayController = Ember.ArrayController.extend
 
     flatten arrangedContent
 
+
   ###
     @private
 
@@ -91,6 +92,6 @@ Emberella.MultiArrayController = Ember.ArrayController.extend
     @chainable
   ###
   _subArraysDidChange: Ember.observer ->
-    Ember.A(get(@, 'needs')).addObjects(Ember.A(get(@, 'subArrays')))
+    get(@, 'needs').addObjects(Ember.A(get(@, 'subArrays')))
     @
   , 'subArrays', 'subArrays.@each'
