@@ -841,7 +841,9 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
   ###
   _displayValueDidChange: Ember.observer ->
     set(@, 'allSuggestions', Ember.A())
-    if get(@, 'displayValue.length') < get(@, 'minLength') then set(@hide(), 'search', '') else get(@show(), 'debouncedValueDidChange')()
+    method = if get(@, 'displayValue.length') < get(@, 'minLength') then 'hide' else 'show'
+    @[method]()
+    get(@, 'debouncedValueDidChange')()
   , 'displayValue', 'minLength'
 
   ###
