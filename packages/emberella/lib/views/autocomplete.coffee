@@ -54,7 +54,6 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
   ###
   isAutocomplete: true
 
-
   ###
     @property childViews
   ###
@@ -511,7 +510,7 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
     else
       set(@, key, value)
       return @
-  .property('hasFocus', '_isListVisible', 'suggestions.length', 'displayValue').volatile()
+  .property('hasFocus', '_isListVisible', 'suggestions.length', 'displayValue')
 
   ###
     The debounced method for responding to changes in the input value.
@@ -831,19 +830,6 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
   ###
   _searchExpression: Ember.computed ->
     @expressionFor get(@, 'search')
-  .property('_escaped_search').readOnly()
-
-  ###
-    @private
-
-    The `search` string escaped for use as a regular expression.
-
-    @property _escaped_search
-    @type String
-    @readOnly
-  ###
-  _escaped_search: Ember.computed ->
-    @escapeSearch get(@, 'search')
   .property('search').readOnly()
 
   ###
@@ -867,7 +853,7 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
   ###
   _hasFocusDidChange: Ember.observer ->
     if !get(@, 'hasFocus')
-      displayValue = get(@, 'displayValue')
+      displayValue = get(@, 'displayValue') ? ''
       selected = get(@, 'selected')
       # The field may appear to lose focus frequently as the focus shifts
       # between child views. The run later helps to verify the focus has, in
@@ -1037,8 +1023,7 @@ Emberella.AutocompleteInputView = Ember.TextField.extend Emberella.FocusableMixi
   @uses Emberella.MembershipMixin
 ###
 Emberella.AutocompleteListView = Ember.CollectionView.extend Emberella.MembershipMixin,
-  isVisibleBinding: 'leadView.isListVisible'
-  inherit: ['itemViewClass', 'content:suggestions']
+  inherit: ['itemViewClass', 'content:suggestions', 'isVisible:isListVisible']
   classNames: ['emberella-autocomplete-list']
 
 
