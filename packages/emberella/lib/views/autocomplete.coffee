@@ -472,7 +472,7 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
   # See: http://stackoverflow.com/questions/1520800/why-regexp-with-global-flag-in-javascript-give-wrong-results
   searchExpression: Ember.computed ->
     new RegExp(get(@, '_searchExpression'), 'gi')
-  .property('_searchExpression').volatile().readOnly()
+  .volatile().readOnly()
 
   ###
     An array of paths to use with `Ember.get`. Always includes the
