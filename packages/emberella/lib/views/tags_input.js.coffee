@@ -391,7 +391,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     #setter
     else
       set(@, '_cursor', value)
-  .property('_cursor').volatile()
+  .volatile()
 
   ###
     Insert a single new tag value into the `content` array at a given index.
