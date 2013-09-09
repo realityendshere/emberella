@@ -1525,6 +1525,10 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
 Emberella.TagItemView = Ember.View.extend Ember.StyleBindingsMixin, Emberella.FocusableMixin, Emberella.KeyboardControlMixin, Emberella.MembershipMixin,
   inherit: ['template', 'contentPath', 'deleteCharacter', 'deleteTitle', 'highlighter']
 
+  actions: {
+    removeSelf: -> @removeSelf.apply @, arguments
+  }
+
   ###
     The type of element to render this view into. By default, tag items will
     appear in `<span/>` elements.

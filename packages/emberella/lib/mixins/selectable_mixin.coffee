@@ -33,6 +33,12 @@ Emberella.SelectableMixin = Ember.Mixin.create
     get @, 'selection'
     @_super()
 
+  actions: {
+    select: -> @select.apply @, arguments
+    next: -> @next.apply @, arguments
+    previous: -> @previous.apply @, arguments
+  }
+
   # allowsSelection: true #TODO: Enable this setting
 
   # allowsMultipleSelection: true #TODO: Enable this setting

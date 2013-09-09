@@ -64,6 +64,10 @@ Emberella.AutocompleteSupport = Ember.Mixin.create
     @__cached_results = {}
     @_super()
 
+  actions: {
+    searchForSuggestions: -> @searchForSuggestions.apply @, arguments
+  }
+
   ###
     Get cached results for a given view/key.
 
