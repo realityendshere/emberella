@@ -256,7 +256,7 @@ Emberella.AutocompleteTagsInputView = Emberella.TagsInput.extend Emberella.Membe
     'deleteTitle'
     'tagOnFocusOut:autocompleteOnFocusOut'
     'selected'
-    'highlighter'
+    'stylist'
   ]
 
   ###

@@ -263,7 +263,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     A collection of fuctions to use for applying special classes to each tag
     listing.
 
-    Set the `highlighter` property to an object where each key represents a
+    Set the `stylist` property to an object where each key represents a
     class name to add to a tag listing view and each value is a function that
     returns a truthy value when key should be added as a class name. This
     allows tags with special meaning to be styled differently as needed.
@@ -271,20 +271,20 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     @example
       // Adds the class 'is-ember' to any tag listing view with a label
       // of 'ember'.
-      this.set('highlighter', {
+      this.set('stylist', {
         'is-ember': function (content) {
           return (Ember.get(content, 'label').toLowerCase() === 'ember');
         }
       });
 
-    Each highlighter function is called in the context of its tag listing
+    Each stylist function is called in the context of its tag listing
     view instance.
 
-    @property highlighter
+    @property stylist
     @type Object
     @default null
   ###
-  highlighter: null
+  stylist: null
 
   ###
     The default template for each tag item listing. Set the `template` property
@@ -1527,7 +1527,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
 ###
 
 Emberella.TagItemView = Ember.View.extend Ember.StyleBindingsMixin, Emberella.FocusableMixin, Emberella.KeyboardControlMixin, Emberella.MembershipMixin,
-  inherit: ['template', 'contentPath', 'deleteCharacter', 'deleteTitle', 'highlighter']
+  inherit: ['template', 'contentPath', 'deleteCharacter', 'deleteTitle', 'stylist']
 
   actions: {
     removeSelf: -> @removeSelf.apply @, arguments
@@ -1554,14 +1554,14 @@ Emberella.TagItemView = Ember.View.extend Ember.StyleBindingsMixin, Emberella.Fo
   classNames: ['emberella-tag-item']
 
   ###
-    Add the computed `highlighterClasses` property as additional classes for
+    Add the computed `stylistClasses` property as additional classes for
     this tag listing.
 
     @property classNameBindings
     @type Array
-    @default ['highlighterClasses']
+    @default ['stylistClasses']
   ###
-  classNameBindings: ['highlighterClasses']
+  classNameBindings: ['stylistClasses']
 
   ###
     Toggle the `display` style based on the property of the same name.
@@ -1614,21 +1614,21 @@ Emberella.TagItemView = Ember.View.extend Ember.StyleBindingsMixin, Emberella.Fo
   .property('content', 'contentPath').readOnly()
 
   ###
-    Iterates over the highlighter object (if one is set) and assembles a
+    Iterates over the stylist object (if one is set) and assembles a
     space-delimited string of classes to add to this listing view.
 
-    @property highlighterClasses
+    @property stylistClasses
     @type String
   ###
-  highlighterClasses: Ember.computed ->
-    return '' unless (content = get(@, 'content')) and (highlighter = get(@, 'highlighter')) and typeOf(highlighter) is 'object'
+  stylistClasses: Ember.computed ->
+    return '' unless (content = get(@, 'content')) and (stylist = get(@, 'stylist')) and typeOf(stylist) is 'object'
     ret = Ember.A()
-    for own key, fn of highlighter
+    for own key, fn of stylist
       continue unless typeOf(fn) is 'function'
       ret.pushObject(key) if fn.call(@, content)
 
     ret.join(' ')
-  .property 'highlighter', 'content'
+  .property 'stylist', 'content'
 
   ###
     Set display style to 'none' when content is empty.
