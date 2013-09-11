@@ -227,6 +227,8 @@ Emberella.AutocompleteTagsView = Emberella.AutocompleteView.extend
 
     null
 
+  _didRemoveValue: (value) ->
+    @trigger 'didRemoveValue', value
 
 ###############################################################################
 ###############################################################################
@@ -270,3 +272,6 @@ Emberella.AutocompleteTagsInputView = Emberella.TagsInput.extend Emberella.Membe
 
   _didAddValue: (value, idx) ->
     @dispatch('_didAddValue', value, idx)
+
+  _didRemoveValue: (value) ->
+    @dispatch('_didRemoveValue', value)

@@ -769,7 +769,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
 
     content.removeObject value
     set(@, 'cursor', idx)
-    @trigger 'didRemoveValue', value
+    @_didRemoveValue value
     @
 
   ###
@@ -1075,6 +1075,10 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
 
   _didAddValue: (value, idx) ->
     @trigger 'didAddValue', value, idx
+    @
+
+  _didRemoveValue: (value) ->
+    @trigger 'didRemoveValue', value
     @
 
   ###
