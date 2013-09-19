@@ -150,7 +150,12 @@ Emberella.MQObject = Ember.ObjectProxy.extend
 
     # Setup a new state manager with a reference to this object instance
     stateManager = Emberella.MQStateManager.create queueItem: @
-    set(this, 'mqStateManager', stateManager)
+    set(@, 'mqStateManager', stateManager)
+    get(@, 'mqStateManager.currentState')
+    get(@, 'isQueueItemWaiting')
+    get(@, 'isQueueItemInProgress')
+    get(@, 'isQueueItemComplete')
+    get(@, 'isQueueItemError')
 
   ###
     @property isQueueableItem
