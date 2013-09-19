@@ -123,7 +123,7 @@ Emberella.MQStateManager = Ember.StateManager.extend
     retry: (manager) ->
       manager.invokeQueueCallback 'willRetryQueueItem'
       manager.incrementProperty('retries')
-      manager.transitionTo('queued')
+      Ember.run -> manager.transitionTo('queued')
 
     didError: (manager) ->
       manager.transitionTo('error')
@@ -596,15 +596,13 @@ Emberella.MQMixin.reopen
       Ember.warn "Item to mark as complete was not a queueable item."
       return @
 
-    unless get item, 'isQueueItemInProgress'
-      Ember.warn "Item to mark as complete was not active or in progress."
-      return @
-
     isPaused = get @, 'isPaused'
 
     markAsCompleteFn = ->
       return if get @, 'isPaused'
       @removeObserver 'isPaused', @, markAsCompleteFn
+      unless get item, 'isQueueItemInProgress'
+        Ember.warn "Item to mark as complete was not active or in progress."
       item.send 'finish'
 
     if isPaused
