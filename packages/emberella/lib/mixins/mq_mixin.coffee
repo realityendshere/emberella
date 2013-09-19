@@ -179,7 +179,7 @@ Emberella.MQObject = Ember.ObjectProxy.extend
     @type Integer
     @default 0
   ###
-  retriesBinding: 'mqStateManager.retries'
+  retries: Ember.computed.alias('mqStateManager.retries').readOnly()
 
   ###
     A computed property that returns true when this object is in the
