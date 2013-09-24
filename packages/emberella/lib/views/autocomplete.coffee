@@ -320,17 +320,21 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
   displayValueBinding: 'inputView.value'
 
   ###
-    When no suggestions, a listing with the current display value will appear
-    if this is `true`.
+    A listing with the current display value will appear as an option if this
+    is `true`.
+
+    If set to a value less than 0, the display value will be appended to the
+    end of the suggestions listing. Otherwise, the display value will appear as
+    the first suggestion in the list.
 
     TODO: adjust this behavior to do something more useful like display
     a message/error.
 
-    @property showEmptyListing
+    @property suggestCurrentValue
     @type Boolean
     @default false
   ###
-  showEmptyListing: false
+  suggestCurrentValue: false
 
   ###
     When `true`, the selected autocomplete suggestion is set as the value when
@@ -443,7 +447,7 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
     allSuggestions = get(@, 'allSuggestions').slice()
     _suggestions = allSuggestions.slice(0, items)
 
-    return _suggestions if _suggestions.length > 0 or !get(@,'showEmptyListing') or displayValue is ''
+    return _suggestions unless (suggestCurrentValue = get(@,'suggestCurrentValue'))
 
     contentPath = get @, 'contentPath'
     inputObject = displayValue
@@ -455,7 +459,9 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
         part = parts.shift()
         inputObject[part] = if parts.length > 0 then {} else displayValue
 
-    _suggestions.pushObject(inputObject)
+    method = if +suggestCurrentValue < 0 then "pushObject" else "unshiftObject"
+
+    _suggestions[method](inputObject)
 
     _suggestions
   .property('allSuggestions', 'items', 'sorter').readOnly()
