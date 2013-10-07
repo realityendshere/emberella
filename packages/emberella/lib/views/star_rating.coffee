@@ -23,6 +23,7 @@ set = Ember.set
 
 Emberella.StarRating = Ember.View.extend
   classNames: ['ember-star-rating']
+  classNameBindings: ['disabled']
 
   defaultTemplate: Ember.Handlebars.compile([
       '<span class="star-rating" {{bind-attr style="view.outerStyle"}}>',
