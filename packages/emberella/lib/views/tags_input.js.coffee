@@ -79,6 +79,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     @default ['emberella-tags-input']
   ###
   classNames: ['emberella-tags-input']
+  classNameBindings: ['disabled']
 
   ###
     Binds the width and height styles to the properties of the same name.
@@ -88,6 +89,15 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     @default ['width', 'height']
   ###
   styleBindings: ['width', 'height']
+
+  ###
+    Disables tag input when true.
+
+    @property disabled
+    @type Boolean
+    @default false
+  ###
+  disabled: false
 
   ###
     The view class to use for each item listing. The default
@@ -296,9 +306,11 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   ###
   defaultTemplate: Ember.Handlebars.compile [
     '<span class="emberella-tag-item-content">{{view.displayContent}}</span>'
-    '{{#if view.deleteCharacter}}'
-      '<a href="#" {{bind-attr title="view.deleteTitle"}} {{action "removeSelf" target=view bubbles=false}}>{{view.deleteCharacter}}</a>'
-    '{{/if}}'
+    '{{#unless view.disabled}}'
+      '{{#if view.deleteCharacter}}'
+        '<a href="#" {{bind-attr title="view.deleteTitle"}} {{action "removeSelf" target=view bubbles=false}}>{{view.deleteCharacter}}</a>'
+      '{{/if}}'
+    '{{/unless}}'
   ].join(' ')
 
   ###
@@ -889,7 +901,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     @param Event e The jQuery click event
   ###
   click: (e) ->
-    return unless e.target is get(@, 'element')
+    return if get(@, 'disabled') or e.target isnt get(@, 'element')
     posX = e.pageX
     posY = e.pageY
     nearest = @.find((childView) ->
@@ -1527,7 +1539,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
 ###
 
 Emberella.TagItemView = Ember.View.extend Ember.StyleBindingsMixin, Emberella.FocusableMixin, Emberella.KeyboardControlMixin, Emberella.MembershipMixin,
-  inherit: ['template', 'contentPath', 'deleteCharacter', 'deleteTitle', 'stylist']
+  inherit: ['template', 'contentPath', 'deleteCharacter', 'deleteTitle', 'stylist', 'disabled']
 
   actions: {
     removeSelf: -> @removeSelf.apply @, arguments
@@ -1801,7 +1813,9 @@ Emberella.TagItemView = Ember.View.extend Ember.StyleBindingsMixin, Emberella.Fo
   @uses Emberella.FocusableMixin
   @uses Emberella.KeyboardControlMixin
 ###
-Emberella.TagItemInput = Emberella.FlexibleTextField.extend Emberella.FocusableMixin, Emberella.KeyboardControlMixin,
+Emberella.TagItemInput = Emberella.FlexibleTextField.extend Emberella.FocusableMixin, Emberella.KeyboardControlMixin, Emberella.MembershipMixin,
+  inherit: ['disabled']
+
   isTagItemInput: true
 
   ###
@@ -1812,7 +1826,7 @@ Emberella.TagItemInput = Emberella.FlexibleTextField.extend Emberella.FocusableM
     @type String
   ###
   placeholder: Ember.computed ->
-    if get(@, 'parentView.content.length') then '' else get(@, 'parentView.placeholder')
+    if get(@, 'disabled') or get(@, 'parentView.content.length') then '' else get(@, 'parentView.placeholder')
   .property 'parentView.placeholder', 'parentView.content.length'
 
   ###
