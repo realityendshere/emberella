@@ -76,7 +76,7 @@ Emberella.MembershipMixin = Ember.Mixin.create
     @chainable
   ###
   dispatch: (message, arg = @, args...) ->
-    return @ if !(leadView = get(@, 'leadView')) or Ember.isEmpty(message)
+    return @ if !(leadView = get(@, 'leadView')) or Ember.isEmpty(message) or get(leadView, 'disabled')
     args = [arg].concat(args)
     leadView[message].apply(leadView, args) if typeOf(leadView[message]) is 'function'
     @

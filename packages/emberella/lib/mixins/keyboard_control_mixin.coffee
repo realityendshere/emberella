@@ -4,6 +4,7 @@
 ###
 
 Emberella = window.Emberella
+get = Ember.get
 MAP_SUFFIX = 'Pressed'
 UNMAPPED_PREFIX = 'key'
 
@@ -73,7 +74,7 @@ Emberella.KeyboardControlMixin = Ember.Mixin.create
       e.preventDefault()
 
     e.method = method
-    @trigger(method, e, alt, ctrl, meta, shift)
+    @trigger(method, e, alt, ctrl, meta, shift) unless get(@, 'disabled')
 
   ###
     @private
