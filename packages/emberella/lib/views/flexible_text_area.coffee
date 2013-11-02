@@ -126,7 +126,8 @@ Emberella.FlexibleTextArea = Ember.TextArea.extend Ember.StyleBindingsMixin, Emb
     #Run later to allow the DOM to update sizer node prior to computing width
     Ember.run.later(@, ->
       return if get(@, 'isDestroyed') or get(@, 'isDestroying')
-      height = +sizer.height()
+      sizer.width(@$().width())
+      height = +sizer.outerHeight()
       maxHeight = +get(@, 'maxHeight')
       height = maxHeight if maxHeight and height > maxHeight
       set @, 'height', height
