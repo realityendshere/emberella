@@ -20,6 +20,8 @@ SIZER_CLASS = 'flexible-text-field-sizer'
 ###
 
 Emberella.FlexibleTextField = Ember.TextField.extend Ember.StyleBindingsMixin, Emberella.FocusableMixin,
+  attributeBindings: ['autocomplete']
+  autocomplete: 'off' #disable browser autocomplete
 
   ###
     Defines an array of properties to transform into styles on the listing's
