@@ -162,7 +162,7 @@ Emberella.FlexibleTextField = Ember.TextField.extend Ember.StyleBindingsMixin, E
       )
 
       #Insert the sizer node
-      @$().after(sizer)
+      Ember.$(document.body).append(sizer)
 
     Ember.run.schedule 'afterRender', @, syncStyles
     set(@, SIZER_PROPERTY, sizer)
