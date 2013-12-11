@@ -90,7 +90,7 @@ Emberella.ImageView = Ember.View.extend
     view = @
 
     didImageLoad = (e) ->
-      $img = jQuery(this)
+      $img = jQuery(@)
       $img.off('load.image-view', didImageLoad)
 
       #Do nothing if view instance is destroyed
@@ -111,8 +111,7 @@ Emberella.ImageView = Ember.View.extend
     @chainable
   ###
   updateSrc: ->
-    view = @
-    $img = view.$()
+    $img = @$()
     src = get(@, 'src')
     didImageLoad = get @, 'didImageLoad'
 
@@ -122,7 +121,7 @@ Emberella.ImageView = Ember.View.extend
     if jQuery.trim(src) is ''
       return @
 
-    set view, 'loading', true #enter loading state
+    set @, 'loading', true #enter loading state
 
     $img.on('load.image-view', didImageLoad)
     $img.attr('src', src)
@@ -172,7 +171,7 @@ Emberella.ImageView = Ember.View.extend
     @event willDestroyElement
   ###
   willDestroyElement: ->
-    $img = this.$()
+    $img = @$()
     didImageLoad = get @, 'didImageLoad'
     $img.off('load.image-view', didImageLoad)
     @_super()
