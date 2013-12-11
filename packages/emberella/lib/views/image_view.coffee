@@ -4,7 +4,7 @@
 ###
 
 Emberella = window.Emberella
-jQuery = window.jQuery
+jQuery = Ember.$
 get = Ember.get
 set = Ember.set
 
@@ -90,15 +90,15 @@ Emberella.ImageView = Ember.View.extend
     view = @
 
     didImageLoad = (e) ->
-      img = this
-      img.removeEventListener('load', didImageLoad, false)
+      $img = jQuery(this)
+      $img.off('load.image-view', didImageLoad)
 
       #Do nothing if view instance is destroyed
       return if get(view, 'isDestroyed')
 
       #Do nothing if src has changed again since loading began
       current = get(view, 'src') ? ''
-      loaded = img.src.substr(-(current.length))
+      loaded = $img.attr('src').substr(-(current.length))
       return unless loaded is current
 
       set view, 'loading', false #exit loading state
@@ -112,20 +112,21 @@ Emberella.ImageView = Ember.View.extend
   ###
   updateSrc: ->
     view = @
-    img = get view, 'element'
+    $img = view.$()
     src = get(@, 'src')
     didImageLoad = get @, 'didImageLoad'
 
+    $img.removeAttr 'src'
+
     # Do nothing if the src property is empty
     if jQuery.trim(src) is ''
-      img.removeAttribute 'src'
       return @
 
     set view, 'loading', true #enter loading state
 
-    img.addEventListener('load', didImageLoad, false)
-    img.src = src
-    didImageLoad.call(img) if img.complete
+    $img.on('load.image-view', didImageLoad)
+    $img.attr('src', src)
+    didImageLoad.call($img) if $img.prop 'complete'
     @
 
   ###
@@ -171,7 +172,7 @@ Emberella.ImageView = Ember.View.extend
     @event willDestroyElement
   ###
   willDestroyElement: ->
-    img = get @, 'element'
+    $img = this.$()
     didImageLoad = get @, 'didImageLoad'
-    img.removeEventListener('load', didImageLoad, false)
+    $img.off('load.image-view', didImageLoad)
     @_super()
