@@ -154,14 +154,13 @@ Emberella.SparseArrayController = Ember.ArrayProxy.extend Ember.ControllerMixin,
 
     @method objectAt
     @param {Integer} idx The index to obtain content for
-    @param {Boolean} dontFetch Won't obtain remote data if `true`
     @return {Object}
   ###
-  objectAt: (idx, dontFetch = !get(@, 'shouldRequestObjects')) ->
+  objectAt: (idx) ->
     idx = parseInt idx, 10
     return undefined if (isNaN(idx) or (idx < 0) or (idx >= get(@, 'length')))
     result = @_super(idx) ? @insertSparseArrayItem(idx)
-    return result if (result and result.isStale isnt true) or dontFetch
+    return result if (result and result.isStale isnt true)
     @requestObjectAt(idx)
 
   ###
@@ -170,9 +169,12 @@ Emberella.SparseArrayController = Ember.ArrayProxy.extend Ember.ControllerMixin,
 
     @method requestObjectAt
     @param {Integer} idx The index to fetch content for
+    @param {Boolean} dontFetch Won't obtain remote data if `true`
     @return {Object|Null} A placeholder object or null if content is empty
   ###
-  requestObjectAt: (idx) ->
+  requestObjectAt: (idx, dontFetch = !get(@, 'shouldRequestObjects')) ->
+    return (get(@, 'sparseContent')[idx] ? @insertSparseArrayItem(idx)) if dontFetch
+
     content = get(@, 'content')
     rangeSize = parseInt(get(@, 'rangeSize'), 10) || 1
 
