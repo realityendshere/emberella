@@ -374,7 +374,7 @@ Emberella.SelectableMixin = Ember.Mixin.create
   previous: (expandSelection = false, count = 1) ->
     len = get(@, 'length')
     indices = @indexOfSelection()
-    lastIdx = +@indexOf(get(@, 'lastSelectableObject'))
+    lastIdx = +@lastIndexOf(get(@, 'lastSelectableObject'))
 
     if indices
       targetIdx = indices.first - count
