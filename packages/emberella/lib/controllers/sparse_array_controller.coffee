@@ -154,14 +154,15 @@ Emberella.SparseArrayController = Ember.ArrayProxy.extend Ember.ControllerMixin,
 
     @method objectAt
     @param {Integer} idx The index to obtain content for
+    @param {Boolean} dontFetch Won't obtain remote data if `true`
     @return {Object}
   ###
-  objectAt: (idx) ->
+  objectAt: (idx, dontFetch) ->
     idx = parseInt idx, 10
     return undefined if (isNaN(idx) or (idx < 0) or (idx >= get(@, 'length')))
     result = @_super(idx) ? @insertSparseArrayItem(idx)
     return result if (result and result.isStale isnt true)
-    @requestObjectAt(idx)
+    @requestObjectAt(idx, dontFetch)
 
   ###
     Fetches data at the specified index. If `rangeSize` is greater than 1, this
