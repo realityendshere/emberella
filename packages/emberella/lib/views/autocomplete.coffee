@@ -991,6 +991,7 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
     @method _displayValueChangeHandler
   ###
   _displayValueChangeHandler: ->
+    return if get(@, 'isDestroyed') or get(@, 'isDestroying')
     set(@, '_search', if get(@, 'displayValue.length') < get(@, 'minLength') then '' else get(@, 'displayValue'))
 
 
