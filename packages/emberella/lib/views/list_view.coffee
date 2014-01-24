@@ -262,7 +262,7 @@ Emberella.ListView = Emberella.CollectionView.extend Ember.ScrollHandlerMixin, E
   ###
   debouncedOnScroll: Ember.computed ->
     Emberella.debounce((=>
-      set @, 'isScrolling', false
+      set(@, 'isScrolling', false) unless get(@, 'isDestroyed') or get(@, 'isDestroying')
     ), 30)
 
   ###
