@@ -1012,6 +1012,8 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
   @uses Emberella.MembershipMixin
 ###
 Emberella.AutocompleteInputView = Ember.TextField.extend Emberella.FocusableMixin, Emberella.KeyboardControlMixin, Emberella.MembershipMixin,
+  attributeBindings: ['autocomplete']
+  autocomplete: 'off' #disable browser autocomplete
   inherit: ['value']
 
 
