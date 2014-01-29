@@ -1,23 +1,32 @@
-# Copied from https://github.com/Addepar/ember-table/blob/master/src/utils/style_bindings.coffee
+# Copied from https://github.com/Addepar/ember-table/blob/master/dependencies/ember-addepar-mixins/style_bindings.js
 
 Ember.StyleBindingsMixin = Ember.Mixin.create
+  isStyleBindings: true
+
+  init: ->
+    @applyStyleBindings()
+    @_super()
+
   concatenatedProperties: ['styleBindings']
+
   attributeBindings: ['style']
+
   unitType: 'px'
 
   createStyleString: (styleName, property) ->
     value = @get property
     return unless value?
-    @defineStyleProperty styleName, value
+    @makeStyleProperty styleName, value
 
-  defineStyleProperty: (styleName, value) ->
+  makeStyleProperty: (styleName, value) ->
     if Ember.typeOf(value) is 'number'
       value = value + @get('unitType')
     "#{styleName}:#{value};"
 
   applyStyleBindings: ->
-    styleBindings = this.styleBindings
+    styleBindings = @styleBindings
     return unless styleBindings
+
     # get properties from bindings e.g. ['width', 'top']
     lookup = {}
     styleBindings.forEach (binding) ->
@@ -32,11 +41,9 @@ Ember.StyleBindingsMixin = Ember.Mixin.create
         @createStyleString style, lookup[style]
       styleString = styleTokens.join('')
       return styleString unless styleString.length is 0
+
     # add dependents to computed property
     styleComputed.property.apply(styleComputed, properties)
-    # define style computed properties
-    Ember.defineProperty this, 'style', styleComputed
 
-  init: ->
-    @applyStyleBindings()
-    @_super()
+    # define style computed properties
+    Ember.defineProperty @, 'style', styleComputed
