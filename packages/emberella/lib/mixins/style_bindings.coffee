@@ -7,7 +7,10 @@ Ember.StyleBindingsMixin = Ember.Mixin.create
 
   createStyleString: (styleName, property) ->
     value = @get property
-    return if value is undefined
+    return unless value?
+    @defineStyleProperty styleName, value
+
+  defineStyleProperty: (styleName, value) ->
     if Ember.typeOf(value) is 'number'
       value = value + @get('unitType')
     "#{styleName}:#{value};"
