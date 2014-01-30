@@ -839,6 +839,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     @chainable
   ###
   updateValue: ->
+    return @ if get(@, 'isDestroyed') or get(@, 'isDestroying')
     set(@, 'value', @stringify())
     @
 
@@ -1442,6 +1443,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   ###
   contentArrayDidChange: (array, idx, removedCount, addedCount) ->
     @_updateChildViews()
+    return @ if get(@, 'isDestroyed') or get(@, 'isDestroying')
     @incrementProperty('cursor', ((addedCount || 0) - (removedCount || 0)))
     @updateValue() if @isStringContent()
     @
