@@ -215,6 +215,15 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
   value: ''
 
   ###
+    The placeholder attribute to assign to the autocomplete's input field.
+
+    @property placeholder
+    @type String
+    @default ''
+  ###
+  placeholder: ''
+
+  ###
     The dot-delimited "Ember.get" path for finding a string value to display
     and use as the input value.
 
@@ -1014,7 +1023,7 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
 Emberella.AutocompleteInputView = Ember.TextField.extend Emberella.FocusableMixin, Emberella.KeyboardControlMixin, Emberella.MembershipMixin,
   attributeBindings: ['autocomplete']
   autocomplete: 'off' #disable browser autocomplete
-  inherit: ['value']
+  inherit: ['value', 'placeholder']
 
 
 ###############################################################################
