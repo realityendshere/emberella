@@ -905,8 +905,9 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     return if get(@, 'disabled') or e.target isnt get(@, 'element')
     posX = e.pageX
     posY = e.pageY
-    nearest = @.find((childView) ->
+    nearest = @find((childView) ->
       jQ = childView.$()
+      return false unless jQ?
       position = jQ.offset()
       height = jQ.outerHeight(true)
       space = jQ.outerWidth(true) - jQ.width()
