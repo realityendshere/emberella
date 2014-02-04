@@ -929,13 +929,14 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
       set @, 'allSuggestions', suggestions
       return suggestions
 
-    @searchFor(search, property isnt '_search').then((results) =>
-      displayValue = get @, 'displayValue'
-      set(@, 'allSuggestions', results) if search is displayValue
-    )
+    if @isFocused() or @get('hasFocus')
+      @searchFor(search, !(property in ['_search', 'hasFocus'])).then((results) =>
+        displayValue = get @, 'displayValue'
+        set(@, 'allSuggestions', results) if search is displayValue
+      )
 
     get @, 'allSuggestions'
-  , '_search', 'matcher', 'minLength', 'source', 'source.length'
+  , '_search', 'hasFocus', 'matcher', 'minLength', 'source', 'source.length'
 
   ###
     @private
