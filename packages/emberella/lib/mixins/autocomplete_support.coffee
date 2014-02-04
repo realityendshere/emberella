@@ -76,7 +76,7 @@ Emberella.AutocompleteSupport = Ember.Mixin.create
     @param String url A key to retrieve results from
   ###
   getCacheResults: (actionContext, url) ->
-    path = [guidFor(actionContext), url].join('.')
+    path = [guidFor(actionContext), @_cleanURL(url)].join('.')
     get(@__cached_results, path)
 
   ###
@@ -90,7 +90,7 @@ Emberella.AutocompleteSupport = Ember.Mixin.create
   setCacheResults: (actionContext, url, value) ->
     uniq = guidFor(actionContext)
     set(@__cached_results, uniq, (get(@__cached_results, uniq) ? {}))
-    path = [uniq, url].join('.')
+    path = [uniq, @_cleanURL(url)].join('.')
     set(@__cached_results, path, value)
 
   ###
@@ -162,3 +162,6 @@ Emberella.AutocompleteSupport = Ember.Mixin.create
     url = source.replace SEARCH_SUBSTITUTION, search
     url = search if url is ''
     url
+
+  _cleanURL: (url) ->
+    url.replace '.', '{dot}'
