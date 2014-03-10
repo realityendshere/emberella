@@ -50,8 +50,8 @@ Ember.ResizeHandler = Ember.Mixin.create
 
   didInsertElement: ->
     @_super()
-    $(window).bind 'resize', @get("resizeHandler")
+    $(window).on 'resize.' + Ember.guidFor(@), @get("resizeHandler")
 
   willDestroy: ->
-    $(window).unbind 'resize', @get("resizeHandler")
+    $(window).off 'resize.' + Ember.guidFor(@), @get("resizeHandler")
     @_super()
