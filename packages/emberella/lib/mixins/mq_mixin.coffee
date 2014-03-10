@@ -372,7 +372,7 @@ Emberella.MQMixin.reopen
     inProgressLength = +get(@, 'inProgress.length')
 
     queueLength > 0 and completedLength >= queueLength and inProgressLength is 0
-  .property 'queue.length', 'completed.length', 'inProgress.length'
+  .property 'queue.@each', 'completed.@each', 'inProgress.@each'
 
   ###
     An array of objects waiting to be processed. Once items are added to the
