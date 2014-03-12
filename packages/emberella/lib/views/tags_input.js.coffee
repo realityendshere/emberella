@@ -424,7 +424,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   ###
   addTag: (value = '', idx = get(@, 'cursor')) ->
     type = typeOf(value)
-    method = '_' + ['prepare', type, 'tag'].join('-').camelize()
+    method = '_' + Ember.String.camelize(['prepare', type, 'tag'].join('-'))
 
     unless typeOf(@[method]) is 'function'
       throw new TypeError("Attempting to add tag of an unsupported type " + type)
