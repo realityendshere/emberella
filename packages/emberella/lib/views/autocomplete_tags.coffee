@@ -268,7 +268,8 @@ Emberella.AutocompleteTagsInputView = Emberella.TagsInput.extend Emberella.Membe
   ###
   tagify: (value) ->
     selected = get(@, 'selected')
-    if selected? then [selected] else @_super(value)
+    delimiter = get @, '_delimiter_pattern'
+    if selected? and !(delimiter.test(value)) then [selected] else @_super(value)
 
   _didAddValue: (value, idx) ->
     @dispatch('_didAddValue', value, idx)
