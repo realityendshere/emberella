@@ -61,7 +61,7 @@ Emberella.KeyboardControlMixin = Ember.Mixin.create
   ###
   keyDown: (e) ->
     map = Emberella.KeyboardControlMixin.KEY_MAP
-    code = e.keyCode
+    code = e.which ? e.keyCode
     method = @_methodNameForKeyCode code
     alt = e.altKey
     ctrl = e.ctrlKey
