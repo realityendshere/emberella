@@ -4,11 +4,11 @@
 ###
 
 Emberella = window.Emberella
-jQuery = window.jQuery
 get = Ember.get
 set = Ember.set
 SIZER_PROPERTY = '_sizing_element'
 SIZER_CLASS = 'flexible-text-field-sizer'
+SIZER_CONTAINER = '__flexibleInputContainer'
 
 ###
   `Emberella.FlexibleTextField` enhances Ember's standard TextField with the
@@ -143,7 +143,7 @@ Emberella.FlexibleTextField = Ember.TextField.extend Ember.StyleBindingsMixin, E
     @return jQuery A reference to the sizer node
   ###
   createSizer: ->
-    sizer = jQuery('<div/>') #create jQuery element
+    sizer = Ember.$('<div/>') #create jQuery element
     sizer.addClass SIZER_CLASS #make it stylable
 
     syncStyles = ->
@@ -162,7 +162,7 @@ Emberella.FlexibleTextField = Ember.TextField.extend Ember.StyleBindingsMixin, E
       )
 
       #Insert the sizer node
-      Ember.$(document.body).append(sizer)
+      sizer.appendTo(@_getSizerContainer())
 
     Ember.run.schedule 'afterRender', @, syncStyles
     set(@, SIZER_PROPERTY, sizer)
@@ -222,4 +222,11 @@ Emberella.FlexibleTextField = Ember.TextField.extend Ember.StyleBindingsMixin, E
     set @, 'hasFocus', false
 
     # Update whitespace as needed
-    set(@, 'value', jQuery.trim(get(@, 'value'))) if get(@, 'trimWhitespace')
+    set(@, 'value', Ember.$.trim(get(@, 'value'))) if get(@, 'trimWhitespace')
+
+  _getSizerContainer: ->
+    $div = Ember.$('#' + SIZER_CONTAINER)
+    if $div.length is 0
+      $div = Ember.$('<div id=' + SIZER_CONTAINER + '></div>').appendTo(document.body)
+
+    $div

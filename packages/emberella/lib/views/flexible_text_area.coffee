@@ -7,11 +7,11 @@
 ###
 
 Emberella = window.Emberella
-jQuery = window.jQuery
 get = Ember.get
 set = Ember.set
 SIZER_PROPERTY = '_sizing_element'
 SIZER_CLASS = 'flexible-text-area-sizer'
+SIZER_CONTAINER = '__flexibleInputContainer'
 
 ###
   `Emberella.FlexibleTextArea` enhances Ember's standard TextArea with the
@@ -144,7 +144,7 @@ Emberella.FlexibleTextArea = Ember.TextArea.extend Ember.StyleBindingsMixin, Emb
     @return jQuery A reference to the sizer node
   ###
   createSizer: ->
-    sizer = jQuery('<div/>') #create jQuery element
+    sizer = Ember.$('<div/>') #create jQuery element
     sizer.addClass SIZER_CLASS #make it stylable
 
     syncStyles = ->
@@ -162,7 +162,7 @@ Emberella.FlexibleTextArea = Ember.TextArea.extend Ember.StyleBindingsMixin, Emb
       )
 
       #Insert the sizer node
-      Ember.$(document.body).append(sizer)
+      sizer.appendTo(@_getSizerContainer())
 
     Ember.run.schedule 'afterRender', @, syncStyles
     set(@, SIZER_PROPERTY, sizer)
@@ -222,7 +222,7 @@ Emberella.FlexibleTextArea = Ember.TextArea.extend Ember.StyleBindingsMixin, Emb
     set @, 'hasFocus', false
 
     # Update whitespace as needed then scroll
-    set(@, 'value', jQuery.trim(get(@, 'value'))) if get(@, 'trimWhitespace')
+    set(@, 'value', Ember.$.trim(get(@, 'value'))) if get(@, 'trimWhitespace')
     @_collapseWhitespace() if get(@, 'collapseWhitespace')
     get(@, 'element').scrollTop = 0
 
@@ -240,3 +240,10 @@ Emberella.FlexibleTextArea = Ember.TextArea.extend Ember.StyleBindingsMixin, Emb
     value = (get(@, 'value') || '')
     exp = new RegExp("(\r\n|\n|\r){" + collapseWhitespace + ",}", 'gm')
     set @, 'value', value.replace(exp, new Array(collapseWhitespace + 1).join('$1'))
+
+  _getSizerContainer: ->
+    $div = Ember.$('#' + SIZER_CONTAINER)
+    if $div.length is 0
+      $div = Ember.$('<div id=' + SIZER_CONTAINER + '></div>').appendTo(document.body)
+
+    $div
