@@ -70,7 +70,7 @@ Emberella.KeyboardControlMixin = Ember.Mixin.create
     nodeName = e.target.nodeName.toUpperCase()
 
     if Ember.typeOf(@[method]) is 'function' and map[code]? and
-    not(nodeName in ["INPUT", "SELECT", "TEXTAREA"])
+    not(nodeName in ["INPUT", "SELECT", "TEXTAREA"]) and not(e.target.isContentEditable)
       e.preventDefault()
 
     e.method = method
