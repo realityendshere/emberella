@@ -65,6 +65,19 @@ set = Ember.set
 
 Emberella.ListView = Emberella.CollectionView.extend Ember.ScrollHandlerMixin, Ember.ResizeHandler,
 
+  init: ->
+    ret = @_super()
+    @_renderList()
+    ret
+
+  ###
+    @property isEmberellaListView
+    @type Boolean
+    @default true
+    @final
+  ###
+  isEmberellaListView: true
+
   ###
     Add the class name `emberella-list-view`.
 
@@ -182,11 +195,6 @@ Emberella.ListView = Emberella.CollectionView.extend Ember.ScrollHandlerMixin, E
     @type Integer
   ###
   height: Ember.computed.alias '_height'
-
-  init: ->
-    ret = @_super()
-    @_renderList()
-    ret
 
   ###
     A computed property that indicates the height of the scrollable content.
@@ -668,7 +676,7 @@ Emberella.ListView = Emberella.CollectionView.extend Ember.ScrollHandlerMixin, E
     @param {Boolean} dontFetch
     @return null
   ###
-  _finalizeReuseChildForContentIndex: (childView, contentIndex, dontFetch = false) ->
+  _finalizeReuseChildForContentIndex: (childView, contentIndex, dontFetch) ->
     return if get(childView, 'isDestroyed')
 
     content = get @, 'content'
@@ -799,3 +807,15 @@ Emberella.ListView = Emberella.CollectionView.extend Ember.ScrollHandlerMixin, E
   _visibleItemsDidChange: Ember.observer ->
     @trigger('visibleItemsDidChange', (@numberOfVisibleItems() || 0))
   , 'visibleRows'
+
+  ###
+    @private
+
+    Request list item data if shouldRequestObjects property becomes `true`
+    on content.
+
+    @method _shouldRequestObjectsDidChange
+  ###
+  _shouldRequestObjectsDidChange: Ember.observer ->
+    @_updateChildViews() if get(@, 'content.shouldRequestObjects')
+  , 'content.shouldRequestObjects'
