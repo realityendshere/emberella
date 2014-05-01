@@ -130,5 +130,5 @@ Emberella.GridItemView = Emberella.ListItemView.extend
     @type Integer
   ###
   width: Ember.computed ->
-    get(@, 'columnWidth') - (2 * get(@, 'margin'))
+    get(@, 'columnWidth') - get(@, 'margin')
   .property 'margin', 'columnWidth'

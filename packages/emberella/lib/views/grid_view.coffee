@@ -57,10 +57,6 @@ Emberella.GridView = Emberella.ListView.extend
     In pixels, specify the space to leave to the left and right of
     each listing.
 
-    Note: this "margin" is doubled between columns. For example, a margin
-    of 10 would place the first column 10px from the left edge of the viewable
-    area and a 20px gutter between the 1st and 2nd columns.
-
     @property columnWidth
     @type Integer
     @default 100
@@ -91,7 +87,7 @@ Emberella.GridView = Emberella.ListView.extend
     @type Integer
   ###
   adjustedColumnWidth: Ember.computed ->
-    Math.floor(get(@, 'width') / get(@, 'columns'))
+    Math.floor((get(@, 'width') - +get(@, 'margin')) / get(@, 'columns'))
   .property 'columns', 'width'
 
   ###
