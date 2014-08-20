@@ -756,7 +756,7 @@ Emberella.ListView = Emberella.CollectionView.extend Ember.ScrollHandlerMixin, E
   ###
   _recalculateWidth: ->
     return if get(@, 'isDestroyed') or get(@, 'isDestroying')
-    @set('_width', if @get('state') is 'inDOM' then +@$().width() else window.innerWidth)
+    @set('_width', if get(@, '_state') is 'inDOM' then +@$().width() else window.innerWidth)
 
   ###
     @private
@@ -768,7 +768,7 @@ Emberella.ListView = Emberella.CollectionView.extend Ember.ScrollHandlerMixin, E
   ###
   _recalculateHeight: ->
     return if get(@, 'isDestroyed') or get(@, 'isDestroying')
-    @set('_height', if @get('state') is 'inDOM' then +@$().height() else window.innerHeight)
+    @set('_height', if get(@, '_state') is 'inDOM' then +@$().height() else window.innerHeight)
 
   ###
     @private
@@ -779,7 +779,7 @@ Emberella.ListView = Emberella.CollectionView.extend Ember.ScrollHandlerMixin, E
   ###
   _contentDidChange: Ember.observer ->
     @_super()
-    @_rerenderList() if get(@, 'state') is 'inDOM'
+    @_rerenderList() if get(@, '_state') is 'inDOM'
   , 'content'
 
   ###
