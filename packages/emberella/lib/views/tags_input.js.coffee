@@ -639,7 +639,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     @chainable
   ###
   focus: (e, beginning = false) ->
-    return @ unless (inputView = get(@, 'inputView'))? and get(inputView, 'state') is 'inDOM'
+    return @ unless (inputView = get(@, 'inputView'))? and get(inputView, '_state') is 'inDOM'
     element = get(inputView, 'element')
     element?.focus()
     selection = if beginning then 0 else get(inputView, 'value.length')
@@ -717,7 +717,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     @return Boolean
   ###
   isSelectionAtStart: ->
-    return @ unless (inputView = get(@, 'inputView'))? and get(inputView, 'state') is 'inDOM'
+    return @ unless (inputView = get(@, 'inputView'))? and get(inputView, '_state') is 'inDOM'
     element = get(inputView, 'element')
     !!(element.selectionStart is 0 and element.selectionEnd is 0)
 
@@ -729,7 +729,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     @return Boolean
   ###
   isSelectionAtEnd: ->
-    return @ unless (inputView = get(@, 'inputView'))? and get(inputView, 'state') is 'inDOM'
+    return @ unless (inputView = get(@, 'inputView'))? and get(inputView, '_state') is 'inDOM'
     element = get(inputView, 'element')
     len = get(inputView, 'value.length')
     !!(element.selectionStart is len and element.selectionEnd is len)
@@ -756,7 +756,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
 
     return unless force or @isFocused()
 
-    if get(inputView, 'state') is 'inDOM'
+    if get(inputView, '_state') is 'inDOM'
       @focus({}, beginning)
     else
       Ember.run.schedule 'afterRender', @, ->
@@ -1163,7 +1163,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   ###
   _focusDidChange: Ember.observer ->
     set @, 'hasFocus', @isFocused()
-  , '@each.hasFocus'
+  , 'childViews.@each.hasFocus', 'inputView.hasFocus'
 
   ###
     @private
@@ -1178,7 +1178,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
       # between child views. The run later helps to verify the focus has, in
       # fact, completely left the field.
       Ember.run.later @, ->
-        return unless get(@, 'state') is 'inDOM' and !@isFocused()
+        return unless get(@, '_state') is 'inDOM' and !@isFocused()
         @capture() if get(@, 'tagOnFocusOut')
         set(@, 'cursor', get(@, 'childViews.length')) if get(@, 'inputView.value') is ''
       , 100
@@ -1259,7 +1259,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     @method _updateChildViews
   ###
   _updateChildViews: ->
-    return if (get(@, 'state') isnt 'inDOM') or get(@, 'isDestroyed') or get(@, 'isDestroying')
+    return if (get(@, '_state') isnt 'inDOM') or get(@, 'isDestroyed') or get(@, 'isDestroying')
     @_removeInputView()
 
     childViews = @
@@ -1417,7 +1417,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     @param {Object} self
   ###
   contentDidChange: ->
-    @_rerenderList() if get(@, 'state') is 'inDOM'
+    @_rerenderList() if get(@, '_state') is 'inDOM'
 
   ###
     Hook for responding to impending updates to the content array. Override to
