@@ -613,7 +613,7 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
     @chainable
   ###
   focus: ->
-    return @ unless (inputView = get(@, 'inputView'))? and get(inputView, 'state') is 'inDOM'
+    return @ unless (inputView = get(@, 'inputView'))? and get(inputView, '_state') is 'inDOM'
 
     if typeOf(inputView.focus) is 'function'
       inputView.focus()
@@ -883,7 +883,7 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
           # TODO: Fix this code; it sometimes leads to extra tags in
           #       autocomplete with tags view.
           # @searchFor(displayValue).then((results) =>
-          #   return unless get(@, 'state') is 'inDOM'    # Input must be in DOM to update it
+          #   return unless get(@, '_state') is 'inDOM'    # Input must be in DOM to update it
           #   result = if selected in results then selected else results[0]
           #   @complete(result) if result
           # )
