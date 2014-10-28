@@ -394,7 +394,7 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
     @type Function
     @default defaultHighlighter
   ###
-  highlighter: Ember.computed.defaultTo 'defaultHighlighter'
+  highlighter: Ember.computed.oneWay 'defaultHighlighter'
 
   ###
     A custom function for injecting a selected value into the input value.
@@ -403,7 +403,7 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
     @type Function
     @default defaultUpdater
   ###
-  updater: Ember.computed.defaultTo 'defaultUpdater'
+  updater: Ember.computed.oneWay 'defaultUpdater'
 
   ###
     A custom function for determining if a string or object should be included
@@ -416,7 +416,7 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
     @type Function
     @default defaultMatcher
   ###
-  matcher: Ember.computed.defaultTo 'defaultMatcher'
+  matcher: Ember.computed.oneWay 'defaultMatcher'
 
   ###
     A custom function for sorting potential suggestions into the order to
@@ -429,7 +429,7 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
     @type Function
     @default defaultMatcher
   ###
-  sorter: Ember.computed.defaultTo 'defaultSorter'
+  sorter: Ember.computed.oneWay 'defaultSorter'
 
   ###
     An array of potential suggestions that match the current search criteria.

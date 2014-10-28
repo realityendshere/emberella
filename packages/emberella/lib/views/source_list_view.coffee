@@ -128,7 +128,7 @@ Emberella.SourceListView = Emberella.ContainerView.extend Emberella.MembershipMi
     @type String
     @default 'heading'
   ###
-  headingProperty: Ember.computed.defaultTo 'defaultHeadingProperty'
+  headingProperty: Ember.computed.oneWay 'defaultHeadingProperty'
 
   ###
     The `content` for this view will typically be an array of objects. Thus,

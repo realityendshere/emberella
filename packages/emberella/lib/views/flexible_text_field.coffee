@@ -88,7 +88,7 @@ Emberella.FlexibleTextField = Ember.TextField.extend Ember.StyleBindingsMixin, E
     @type Integer|Null
     @default null
   ###
-  width: Ember.computed.defaultTo 'minWidth'
+  width: Ember.computed.oneWay 'minWidth'
 
   ###
     A max-width style of 100% to keep the text field from easily growing out

@@ -71,7 +71,7 @@ Emberella.GridItemView = Emberella.ListItemView.extend
     @property fluctuateListing
     @type Integer
   ###
-  fluctuateListing: Ember.computed.defaultTo 'columns'
+  fluctuateListing: Ember.computed.oneWay 'columns'
 
   ###
     The seed for the fluctuated class name.
