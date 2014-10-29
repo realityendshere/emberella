@@ -6,7 +6,6 @@
 Emberella = window.Emberella
 get = Ember.get
 set = Ember.set
-guidFor = Ember.guidFor
 typeOf = Ember.typeOf
 
 ###
@@ -29,7 +28,7 @@ Emberella.SelectableMixin = Ember.Mixin.create
   isSelectable: true #quack like a duck
 
   init: ->
-    set @, '_selection', new Emberella.SelectionSet()
+    set @, '_selection', Ember.A()
     get @, 'selection'
     @_super()
 
@@ -497,19 +496,3 @@ Emberella.SelectableMixin = Ember.Mixin.create
   willDestroy: ->
     @_super()
     @_teardownSelection()
-
-###
-  `Emberella.SelectionSet` an `Ember.Set` that maps the `nextObject` method
-  to `objectAt`.
-
-  @class SelectionSet
-  @namespace Emberella
-  @extends Ember.Set
-###
-Emberella.SelectionSet = Ember.Set.extend
-  ###
-    Alias for `nextObject`.
-
-    @method objectAt
-  ###
-  objectAt: Ember.aliasMethod('nextObject')
