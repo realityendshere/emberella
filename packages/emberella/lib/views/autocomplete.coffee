@@ -362,7 +362,7 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
     @type Ember.View
     @default 'Emberella.AutocompleteInputView'
   ###
-  inputViewClass: 'Emberella.AutocompleteInputView'
+  inputViewClass: AutocompleteInputView
 
   ###
     The view class to use as the suggestion collection view.
@@ -371,7 +371,7 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
     @type Ember.View
     @default 'Emberella.AutocompleteListView'
   ###
-  listViewClass: 'Emberella.AutocompleteListView'
+  listViewClass: AutocompleteListView
 
   ###
     The view class to use for individual suggestion listing views.
@@ -380,7 +380,7 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
     @type Ember.View
     @default 'Emberella.AutocompleteItemView'
   ###
-  itemViewClass: 'Emberella.AutocompleteItemView'
+  itemViewClass: AutocompleteItemView
 
   ###
     A custom string.replace function to highlight matching strings in
@@ -1021,7 +1021,7 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
   @uses Emberella.KeyboardControlMixin
   @uses Emberella.MembershipMixin
 ###
-Emberella.AutocompleteInputView = Ember.TextField.extend Emberella.FocusableMixin, Emberella.KeyboardControlMixin, Emberella.MembershipMixin,
+AutocompleteInputView = Emberella.AutocompleteInputView = Ember.TextField.extend Emberella.FocusableMixin, Emberella.KeyboardControlMixin, Emberella.MembershipMixin,
   attributeBindings: ['autocomplete']
   autocomplete: 'off' #disable browser autocomplete
   inherit: ['value', 'placeholder']
@@ -1041,7 +1041,7 @@ Emberella.AutocompleteInputView = Ember.TextField.extend Emberella.FocusableMixi
   @extends Ember.CollectionView
   @uses Emberella.MembershipMixin
 ###
-Emberella.AutocompleteListView = Ember.CollectionView.extend Emberella.MembershipMixin,
+AutocompleteListView = Emberella.AutocompleteListView = Ember.CollectionView.extend Emberella.MembershipMixin,
   inherit: ['itemViewClass', 'content:suggestions', 'isVisible:isListVisible']
   classNames: ['emberella-autocomplete-list']
 
@@ -1061,7 +1061,7 @@ Emberella.AutocompleteListView = Ember.CollectionView.extend Emberella.Membershi
   @extends Ember.View
   @uses Emberella.MembershipMixin
 ###
-Emberella.AutocompleteItemView = Ember.View.extend Emberella.MembershipMixin,
+AutocompleteItemView = Emberella.AutocompleteItemView = Ember.View.extend Emberella.MembershipMixin,
   inherit: ['template', 'highlighter', 'searchExpression', 'contentPath']
 
   classNames: ['emberella-autocomplete-item']
