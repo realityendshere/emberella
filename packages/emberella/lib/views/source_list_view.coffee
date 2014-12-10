@@ -33,6 +33,11 @@ DEFAULT_HEADING_TEMPLATE = Ember.Handlebars.compile([
   @uses Emberella.MembershipMixin
 ###
 Emberella.SourceListView = Emberella.ContainerView.extend Emberella.MembershipMixin,
+  init: ->
+    @_super()
+    @pushObject(@createChildView(get(@, 'headingView')))
+    @pushObject(@createChildView(get(@, 'listView')))
+
   # Private bookkeeping property
   _listingDepth: 0
 
@@ -63,15 +68,6 @@ Emberella.SourceListView = Emberella.ContainerView.extend Emberella.MembershipMi
   classNames: [ "emberella-source-list" ]
 
   classNameBindings: [ 'isOriginalSource:emberella-source-original', 'listingDepthClassName' ]
-
-  ###
-    Specifies which child views to render
-
-    @property childViews
-    @type Array
-    @default ['headingView', 'listView']
-  ###
-  childViews: ['headingView', 'listView']
 
   ###
     Flag to indicate if this is the root of the source listing tree.
