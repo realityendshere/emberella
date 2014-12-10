@@ -111,6 +111,10 @@ AutocompleteItemView = Emberella.AutocompleteItemView = Ember.View.extend Embere
   click: (e) ->
     @dispatch('selectMember', @, true)
 
+###############################################################################
+###############################################################################
+
+
 ###
   The `Emberella.AutocompleteView` combines a text field and a collection view
   to offer a list of suggested completions based on user input.
@@ -145,6 +149,11 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
     @final
   ###
   isAutocomplete: true
+
+  ###
+    @property childViews
+  ###
+  childViews: ['inputView', 'listView']
 
   ###
     @property defaultTemplate
@@ -1024,11 +1033,6 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
 
     get @, 'allSuggestions'
   , '_search', 'matcher', 'minLength', 'source', 'source.length'
-
-  setupChildViews: Ember.observer(->
-    @pushObject(@createChildView(get(@, 'inputView')))
-    @pushObject(@createChildView(get(@, 'listView')))
-  ).on 'init'
 
   ###
     @private
