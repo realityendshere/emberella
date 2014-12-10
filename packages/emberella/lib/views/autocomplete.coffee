@@ -151,11 +151,6 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
   isAutocomplete: true
 
   ###
-    @property childViews
-  ###
-  childViews: ['inputView', 'listView']
-
-  ###
     @property defaultTemplate
     @final
   ###
@@ -1033,6 +1028,14 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
 
     get @, 'allSuggestions'
   , '_search', 'matcher', 'minLength', 'source', 'source.length'
+
+  setupChildViews: Ember.observer(->
+    set(@, 'inputView', @createChildView(get(@, 'inputView')))
+    set(@, 'listView', @createChildView(get(@, 'listView')))
+
+    @pushObject(get(@, 'inputView'))
+    @pushObject(get(@, 'listView'))
+  ).on 'init'
 
   ###
     @private
