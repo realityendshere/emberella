@@ -19,6 +19,98 @@ ESCAPE_REPLACEMENT = '\\$&'
 SEARCH_SUBSTITUTION = /%s/
 QUERY_SUBSTITUTION = /%q/
 
+
+###############################################################################
+###############################################################################
+
+
+###
+  `Emberella.AutocompleteInputView` is designed to be a drop-in input view for
+  `Emberella.AutocompleteView`. It sets up value bindings and disables the
+  browser's built in autocomplete functionality.
+
+  @class AutocompleteInputView
+  @namespace Emberella
+  @extends Ember.TextField
+  @uses Emberella.FocusableMixin
+  @uses Emberella.KeyboardControlMixin
+  @uses Emberella.MembershipMixin
+###
+AutocompleteInputView = Emberella.AutocompleteInputView = Ember.TextField.extend Emberella.FocusableMixin, Emberella.KeyboardControlMixin, Emberella.MembershipMixin,
+  attributeBindings: ['autocomplete']
+  autocomplete: 'off' #disable browser autocomplete
+  inherit: ['value', 'placeholder']
+
+
+###############################################################################
+###############################################################################
+
+
+###
+  `Emberella.AutocompleteListView` is designed to be a drop-in collection view
+  for `Emberella.AutocompleteView`. It sets up property bindings to allow
+  properties to be inherited from the parent `Emberella.AutocompleteView`.
+
+  @class AutocompleteListView
+  @namespace Emberella
+  @extends Ember.CollectionView
+  @uses Emberella.MembershipMixin
+###
+AutocompleteListView = Emberella.AutocompleteListView = Ember.CollectionView.extend Emberella.MembershipMixin,
+  inherit: ['itemViewClass', 'content:suggestions', 'isVisible:isListVisible']
+  classNames: ['emberella-autocomplete-list']
+
+
+###############################################################################
+###############################################################################
+
+
+###
+  `Emberella.AutocompleteItemView` is designed to be a drop-in suggestion
+  listing view for `Emberella.AutocompleteView`. It sets up property bindings
+  to allow certain properties, including `template`, to be inherited from its
+  host `Emberella.AutocompleteView`.
+
+  @class AutocompleteItemView
+  @namespace Emberella
+  @extends Ember.View
+  @uses Emberella.MembershipMixin
+###
+AutocompleteItemView = Emberella.AutocompleteItemView = Ember.View.extend Emberella.MembershipMixin,
+  inherit: ['template', 'highlighter', 'searchExpression', 'contentPath']
+
+  classNames: ['emberella-autocomplete-item']
+
+  classNameBindings: ['selected']
+
+  leadViewBinding: 'parentView.parentView'
+
+  ###
+    The string to display as the suggestion.
+
+    @property displayContent
+    @type String
+    @default ''
+    @readOnly
+  ###
+  displayContent: Ember.computed ->
+    content = get @, 'content'
+    displayContent = get(content, get(@, 'contentPath')) ? ''
+    searchExpression = get @, 'searchExpression'
+    highlighter = get @, 'highlighter'
+    displayContent.replace searchExpression, highlighter
+  .property('content', 'contentPath').readOnly()
+
+  selected: Ember.computed ->
+    get(@, 'content') is get(@, 'leadView.selected')
+  .property 'content', 'leadView.selected'
+
+  mouseEnter: (e) ->
+    @dispatch('selectMember')
+
+  click: (e) ->
+    @dispatch('selectMember', @, true)
+
 ###
   The `Emberella.AutocompleteView` combines a text field and a collection view
   to offer a list of suggested completions based on user input.
@@ -43,8 +135,6 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
   init: ->
     set(@, 'search', '')
     @_super()
-    @pushObject(@createChildView(get(@, 'inputView')))
-    @pushObject(@createChildView(get(@, 'listView')))
 
   ###
     Declares this view is an autocomplete view.
@@ -935,6 +1025,11 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
     get @, 'allSuggestions'
   , '_search', 'matcher', 'minLength', 'source', 'source.length'
 
+  setupChildViews: Ember.observer(->
+    @pushObject(@createChildView(get(@, 'inputView')))
+    @pushObject(@createChildView(get(@, 'listView')))
+  ).on 'init'
+
   ###
     @private
 
@@ -1000,95 +1095,3 @@ Emberella.AutocompleteView = Ember.ContainerView.extend Ember.ViewTargetActionSu
   _displayValueChangeHandler: ->
     return if get(@, 'isDestroyed') or get(@, 'isDestroying')
     set(@, '_search', if get(@, 'displayValue.length') < get(@, 'minLength') then '' else get(@, 'displayValue'))
-
-
-###############################################################################
-###############################################################################
-
-
-###
-  `Emberella.AutocompleteInputView` is designed to be a drop-in input view for
-  `Emberella.AutocompleteView`. It sets up value bindings and disables the
-  browser's built in autocomplete functionality.
-
-  @class AutocompleteInputView
-  @namespace Emberella
-  @extends Ember.TextField
-  @uses Emberella.FocusableMixin
-  @uses Emberella.KeyboardControlMixin
-  @uses Emberella.MembershipMixin
-###
-AutocompleteInputView = Emberella.AutocompleteInputView = Ember.TextField.extend Emberella.FocusableMixin, Emberella.KeyboardControlMixin, Emberella.MembershipMixin,
-  attributeBindings: ['autocomplete']
-  autocomplete: 'off' #disable browser autocomplete
-  inherit: ['value', 'placeholder']
-
-
-###############################################################################
-###############################################################################
-
-
-###
-  `Emberella.AutocompleteListView` is designed to be a drop-in collection view
-  for `Emberella.AutocompleteView`. It sets up property bindings to allow
-  properties to be inherited from the parent `Emberella.AutocompleteView`.
-
-  @class AutocompleteListView
-  @namespace Emberella
-  @extends Ember.CollectionView
-  @uses Emberella.MembershipMixin
-###
-AutocompleteListView = Emberella.AutocompleteListView = Ember.CollectionView.extend Emberella.MembershipMixin,
-  inherit: ['itemViewClass', 'content:suggestions', 'isVisible:isListVisible']
-  classNames: ['emberella-autocomplete-list']
-
-
-###############################################################################
-###############################################################################
-
-
-###
-  `Emberella.AutocompleteItemView` is designed to be a drop-in suggestion
-  listing view for `Emberella.AutocompleteView`. It sets up property bindings
-  to allow certain properties, including `template`, to be inherited from its
-  host `Emberella.AutocompleteView`.
-
-  @class AutocompleteItemView
-  @namespace Emberella
-  @extends Ember.View
-  @uses Emberella.MembershipMixin
-###
-AutocompleteItemView = Emberella.AutocompleteItemView = Ember.View.extend Emberella.MembershipMixin,
-  inherit: ['template', 'highlighter', 'searchExpression', 'contentPath']
-
-  classNames: ['emberella-autocomplete-item']
-
-  classNameBindings: ['selected']
-
-  leadViewBinding: 'parentView.parentView'
-
-  ###
-    The string to display as the suggestion.
-
-    @property displayContent
-    @type String
-    @default ''
-    @readOnly
-  ###
-  displayContent: Ember.computed ->
-    content = get @, 'content'
-    displayContent = get(content, get(@, 'contentPath')) ? ''
-    searchExpression = get @, 'searchExpression'
-    highlighter = get @, 'highlighter'
-    displayContent.replace searchExpression, highlighter
-  .property('content', 'contentPath').readOnly()
-
-  selected: Ember.computed ->
-    get(@, 'content') is get(@, 'leadView.selected')
-  .property 'content', 'leadView.selected'
-
-  mouseEnter: (e) ->
-    @dispatch('selectMember')
-
-  click: (e) ->
-    @dispatch('selectMember', @, true)

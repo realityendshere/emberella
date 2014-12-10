@@ -33,11 +33,6 @@ DEFAULT_HEADING_TEMPLATE = Ember.Handlebars.compile([
   @uses Emberella.MembershipMixin
 ###
 Emberella.SourceListView = Emberella.ContainerView.extend Emberella.MembershipMixin,
-  init: ->
-    @_super()
-    @pushObject(@createChildView(get(@, 'headingView')))
-    @pushObject(@createChildView(get(@, 'listView')))
-
   # Private bookkeeping property
   _listingDepth: 0
 
@@ -253,6 +248,11 @@ Emberella.SourceListView = Emberella.ContainerView.extend Emberella.MembershipMi
   listingDepthClassName: Ember.computed ->
     'emberella-source-list-' + get(@, 'listingDepth')
   .property('listingDepth')
+
+  setupChildViews: Ember.observer(->
+    @pushObject(@createChildView(get(@, 'headingView')))
+    @pushObject(@createChildView(get(@, 'listView')))
+  ).on 'init'
 
   ###
     Assembles an array of all visible (i.e. `isVisible` is `true`) item
