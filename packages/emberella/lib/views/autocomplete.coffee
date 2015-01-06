@@ -108,6 +108,12 @@ AutocompleteItemView = Emberella.AutocompleteItemView = Ember.View.extend Embere
   mouseEnter: (e) ->
     @dispatch('selectMember')
 
+  mouseDown: (e) ->
+    e.preventDefault() #Keeps focus intact
+
+  mouseUp: (e) ->
+    @dispatch('selectMember', @, true)
+
   click: (e) ->
     @dispatch('selectMember', @, true)
 
