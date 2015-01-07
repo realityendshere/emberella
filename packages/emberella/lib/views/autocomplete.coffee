@@ -114,9 +114,6 @@ AutocompleteItemView = Emberella.AutocompleteItemView = Ember.View.extend Embere
   mouseUp: (e) ->
     @dispatch('selectMember', @, true)
 
-  click: (e) ->
-    @dispatch('selectMember', @, true)
-
 ###############################################################################
 ###############################################################################
 
