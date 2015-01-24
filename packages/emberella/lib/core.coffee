@@ -9,7 +9,7 @@ Emberella.VERSION = '0.0.2'
 # that point, the entire Emberella premise will change and these 2 lines of
 # code won't matter.
 
-if Ember.typeOf(Ember.HTMLBars.compile) is 'function' and Ember.typeOf(Ember.Handlebars.compile) isnt 'function'
+if Ember.typeOf(Ember.HTMLBars?.compile) is 'function' and Ember.typeOf(Ember.Handlebars.compile) isnt 'function'
   Ember.Handlebars.compile = Ember.HTMLBars.compile
 
 
