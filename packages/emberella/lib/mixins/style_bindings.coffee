@@ -6,6 +6,7 @@ escapeCSS = (value) ->
   # This prevents anything other than a single style from being
   # set. However, this may disrupt some legitimate styles and
   # and doesn't cover all XSS attack vectors.
+  return '' unless Ember.typeOf(value) is 'string'
   value.replace /;.*$/, ''
 
 Ember.StyleBindingsMixin = Ember.Mixin.create
@@ -50,7 +51,8 @@ Ember.StyleBindingsMixin = Ember.Mixin.create
       styleTokens = styles.map (style) =>
         @createStyleString style, lookup[style]
       styleString = styleTokens.join('')
-      return new Ember.Handlebars.SafeString(styleString) unless styleString.length is 0
+      # TODO: Figure out better way to return empty style without deprecation warning
+      new Ember.Handlebars.SafeString(if (styleString.length is 0) then '' else styleString)
 
     # add dependents to computed property
     styleComputed.property.apply(styleComputed, properties)
