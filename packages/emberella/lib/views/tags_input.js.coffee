@@ -44,7 +44,7 @@ ESCAPE_REPLACEMENT = '\\$&'
   @uses Emberella.FocusableMixin
   @uses Emberella.KeyboardControlMixin
 ###
-Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Emberella.FocusableMixin, Emberella.KeyboardControlMixin,
+Emberella.TagsInput = Ember.ContainerView.extend Emberella.KeyboardControlMixin,
   # private bookkeeping properties
   _value: ''
   _cursor: 0
@@ -80,15 +80,6 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   ###
   classNames: ['emberella-tags-input']
   classNameBindings: ['disabled']
-
-  ###
-    Binds the width and height styles to the properties of the same name.
-
-    @property styleBindings
-    @type Array
-    @default ['width', 'height']
-  ###
-  styleBindings: ['width', 'height']
 
   ###
     Disables tag input when true.
@@ -194,24 +185,6 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     @default -1
   ###
   tabindex: -1
-
-  ###
-    A width style for the tag input view.
-
-    @property width
-    @type {Integer|String}
-    @default 'auto'
-  ###
-  width: 'auto'
-
-  ###
-    A height style for the tag input view.
-
-    @property height
-    @type {Integer|String}
-    @default 'auto'
-  ###
-  height: 'auto'
 
   ###
     A placeholder to display when the input has no content.
@@ -473,6 +446,7 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
 
     if len isnt get(@, 'content.length')
       Ember.run.schedule('afterRender', @, ->
+        @incrementProperty('cursor', values.length)
         @reset() if value is inputValue
         @refocus(retainFocus)
       )
@@ -886,15 +860,6 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   didRemoveValue: Ember.K
 
   ###
-    Adjust cursor value after entry into the DOM.
-
-    @event didInsertElement
-  ###
-  didInsertElement: ->
-    @_super()
-    set(@, 'cursor', get(@, 'content.length'))
-
-  ###
     Respond to a click event on the view element. The tags input will try to
     position the input view near the position where the click occurred.
 
@@ -1055,6 +1020,17 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
     inputView._didPaste = false
     @
   , 'inputView.value'
+
+  ###
+    @private
+
+    Adjust cursor value after entry into the DOM.
+
+    @method _initCursorPosition
+  ###
+  _initCursorPosition: Ember.on('didInsertElement', ->
+    set(@, 'cursor', get(@, 'content.length'))
+  )
 
   ###
     @private
@@ -1445,7 +1421,6 @@ Emberella.TagsInput = Ember.ContainerView.extend Ember.StyleBindingsMixin, Ember
   contentArrayDidChange: (array, idx, removedCount, addedCount) ->
     @_updateChildViews()
     return @ if get(@, 'isDestroyed') or get(@, 'isDestroying')
-    @incrementProperty('cursor', ((addedCount || 0) - (removedCount || 0)))
     @updateValue() if @isStringContent()
     @
 
