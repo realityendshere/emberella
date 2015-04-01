@@ -289,6 +289,10 @@ Emberella.SourceListView = Emberella.ContainerView.extend Emberella.MembershipMi
 
     results
 
+  actions:
+    toggleVisibility: ->
+      @toggleVisibility()
+
   ###
     Toggles the `isListingVisible` property to show or hide this view's
     descendants.
